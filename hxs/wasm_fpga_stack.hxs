@@ -1,0 +1,209 @@
+HwSwIf WasmFpgaStack {
+	GeneralConfiguration {
+		RelativePathToTopXsl { "hwswif_addon_sen/HwSwIfPhys.xsl" ; }
+		Language = 'English';
+		HwSwIfDialect = 4;
+		SuppressTrfColumn = 'Yes';
+		UseVhdlRecords = 'Yes';
+		UseVhdlModUpInterface = 'No';
+		UseVhdlAcceleratedRdWrDiff = 'Yes';
+		KeysDescription {
+			"Keys: ";
+			"";
+			"Access types: ";
+			"R = Read ";
+			"W = Write ";
+			"RW = Write and Read back exactly what was written last time";
+			"RorW = Write one value, eg. transmit data or read other value, eg. receive data";
+			"";
+			"Default: ";
+			"Binary(0b) or hex(0x) value the respective bits are set to, when one of the reset conditions in the following colums occurs or";
+			"- = if nothing is stored, thus nothing can be reset";
+			"undef = undefined or";
+			"const = containing a constant value not affected by any reset";
+			"";
+			"Columns right of the default column contain a reset cause in the header row of the table and in the table itself:";
+			"- = bits are not affected by this reset";
+			"X = bits are set immediately to default value by this reset";
+			"F = bits are set to default value by connected function when this reset occurs";
+			"";
+			"Reserved Bits within registers have an undefined value when read and should be written as read before when written";
+			"";
+			"Reserved values: ";
+			"* = all values of this bit/nibble position are reserved combinations";
+			"r = remaining not previously noted combinations of this bit/nibble positions are reserved values";
+			"";
+			"It is forbidden to write reserved combinations to registers";
+			"";
+			"[Hw: ...........] = = Supplementary information about HW implementation, for HW review purposes only";
+		}
+		AddressBusBitWidth = 24;
+		SimAbsoluteStartAddress = 0x000000;
+		HeaderValueBeginColumn = 100;
+		FileBeginCHeader {
+			"";
+		}
+		FileEndCHeader {
+			"";
+		}
+		FileBeginCStruct {
+			"";
+		}
+		FileEndCStruct {
+			"";
+		}
+		FileVhdlPackageVersion {
+			"";
+		}
+		FileBeginVhdlHeader {
+			"";
+		}
+		FileEndVhdlHeader {
+			"";
+		}
+		FileBeginVhdlRegister {
+			"";
+		}
+		FileEndVhdlRegister {
+			"";
+		}
+		FileBeginVhdlTestBench {
+			"";
+		}
+		FileEndVhdlTestBench {
+			"";
+		}
+		BlockAddressSegmentSizes = [ 0x10 ];
+	}
+
+
+	Block StackBlk ( Base = 0x0 , Size = 0x10 ) {
+		BlockName {
+            "WebAssembly Stack Block"; }
+		BlockDescription { "This block describes the WebAssembly stack block."; }
+		BlockBusDescription { " "; }
+        BlockAddressSegment = 0;
+		BlockResets {
+			BlockReset { Pwr BlockResetDescription { "Power On Reset" ; } }
+		}
+
+		FieldDiscretePositions ControlReg ( Width = 32, Idx->Addr 0 -> 0x0 ) {
+			FieldName { "Control Register"; }
+			FieldDescription { ""; }
+			TransferPointOfTime = '-';
+			HwConfiguration {
+				HwTypeSync = 'Yes';
+				HwAckImmediate = 'Yes';
+			}
+			Bits {
+				BitFieldReserved ( 31 downto 5 );
+                BitFieldEnum Run ( 4 ) 'RW_WReg_RLoopBack' {
+                    BitFieldDescription { ""; }
+                    ValueEntries {
+                        Value { 0b0 = DoNotRun ValueDescription { "Do nothing."; } }
+                        Value { 0b1 = DoRun ValueDescription { "Perform stack action."; } }
+                    }
+                    ResetValueEntry = 0b0;
+                    BlockResetsAffecting {
+                        Pwr = 'X' ;
+                    }
+                }
+				BitFieldEnum Action ( 3 ) 'RW_WReg_RLoopBack' {
+					BitFieldDescription { ""; }
+					ValueEntries {
+						Value { 0b0 = Push ValueDescription { "Push a value onto the stack."; } }
+						Value { 0b1 = Pop ValueDescription { "Pop a value from the stack."; } }
+					}
+					ResetValueEntry = 0b0;
+                    BlockResetsAffecting {
+                        Pwr = 'X' ;
+                    }
+				}
+				BitFieldEnum ValueType ( 2 downto 0 ) 'RW_WReg_RLoopBack' {
+					BitFieldDescription { ""; }
+					ValueEntries {
+						Value { 0b000 = i32 ValueDescription { "32 Bit Integer"; } }
+						Value { 0b001 = i64 ValueDescription { "64 Bit Integer"; } }
+						Value { 0b010 = f32 ValueDescription { "32 Bit Floating Point Data"; } }
+						Value { 0b011 = f64 ValueDescription { "64 Bit Floarting Point Data"; } }
+						Value { 0b100 = Label ValueDescription { "Structured Control Instructions"; } }
+						Value { 0b101 = Activation ValueDescription { "Call Frame"; } }
+					}
+					ResetValueEntry = 0b0;
+                    BlockResetsAffecting {
+                        Pwr = 'X' ;
+                    }
+				}
+			}
+		}
+
+		FieldDiscretePositions StatusReg ( Width = 32, Idx->Addr 0 -> 0x4 ) {
+			FieldName { "Status Register"; }
+			FieldDescription { ""; }
+			TransferPointOfTime = '-';
+			HwConfiguration {
+				HwTypeSync = 'Yes';
+				HwAckImmediate = 'Yes';
+			}
+			Bits {
+				BitFieldReserved ( 31 downto 1 );
+				BitFieldEnum Busy ( 0 ) 'R_RTrans' {
+					BitFieldDescription { ""; }
+					ValueEntries {
+						Value { 0b0 = IsNotBusy ValueDescription { "Stack is idle."; } }
+						Value { 0b1 = IsBusy ValueDescription { "Stack is busy."; } }
+					}
+					ResetValueEntry = 0b0;
+                    BlockResetsAffecting {
+                        Pwr = 'X' ;
+                    }
+				}
+			}
+		}
+
+		FieldDiscretePositions HighValueReg ( Width = 32, Idx->Addr 0 -> 0x8 ) {
+			FieldName { "High Value Register"; }
+			FieldDescription {
+				"Higher part of the value to push onto stack or ";
+				"higher part of the value that has been popped from the stack.";
+				"The higher part is only of interest if its a 64 bit type.";
+			}
+			TransferPointOfTime = '-';
+			HwConfiguration {
+				HwTypeSync = 'Yes';
+				HwAckImmediate = 'Yes';
+			}
+			Bits {
+				BitFieldData HighValue ( 31 downto 0 ) 'RorW_WReg_RTrans' {
+					BitFieldDescription { ""; }
+					ResetValueEntry = 0b0;
+                    BlockResetsAffecting {
+                        Pwr = 'X' ;
+                    }
+				}
+			}
+		}
+
+		FieldDiscretePositions LowValueReg ( Width = 32, Idx->Addr 0 -> 0xC ) {
+			FieldName { "Low Value Register"; }
+			FieldDescription {
+				"Lower part of the value to push onto stack or ";
+				"lower part of the value that has been popped from the stack.";
+			}
+			TransferPointOfTime = '-';
+			HwConfiguration {
+				HwTypeSync = 'Yes';
+				HwAckImmediate = 'Yes';
+			}
+			Bits {
+				BitFieldData LowValue ( 31 downto 0 ) 'RorW_WReg_RTrans' {
+					BitFieldDescription { ""; }
+					ResetValueEntry = 0b0;
+                    BlockResetsAffecting {
+                        Pwr = 'X' ;
+                    }
+				}
+			}
+		}
+	}
+}
