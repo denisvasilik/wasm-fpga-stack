@@ -3,7 +3,6 @@ library ieee;
   use ieee.numeric_std.all;
 
 library work;
-  use work.WasmFpgaStackPackage.all;
   use work.WasmFpgaStackWshBn_Package.all;
 
 entity WasmFpgaStack is
