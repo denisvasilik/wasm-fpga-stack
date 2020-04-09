@@ -75,6 +75,8 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   signal LowValue_ToBeRead : std_logic_vector(31 downto 0);
   signal LowValue_Written : std_logic_vector(31 downto 0);
 
+  signal MaskedAdr : std_logic_vector(23 downto 0);
+
   signal RamEnable : std_logic;
   signal RamWriteEnable : std_logic_vector(0 downto 0);
   signal RamAddress : std_logic_vector(9 downto 0);
@@ -102,12 +104,16 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   constant StackStatePop64Bit4 : std_logic_vector(7 downto 0) := x"0C";
   constant StackStatePop64Bit5 : std_logic_vector(7 downto 0) := x"0D";
 
+  constant WASMFPGASTORE_ADR_BLK_MASK_StackBlk : std_logic_vector(23 downto 0) := x"00000F";
+
 begin
 
   Rst <= not nRst;
 
   Ack <= StackBlk_Ack;
   DatOut <= StackBlk_DatOut;
+
+  MaskedAdr <= Adr and WASMFPGASTORE_ADR_BLK_MASK_StackBlk;
   
   process (Clk, Rst) is
   begin
@@ -232,7 +238,7 @@ begin
     port map (
       Clk => Clk,
       Rst => Rst,
-      Adr => Adr,
+      Adr => MaskedAdr,
       Sel => Sel,
       DatIn => DatIn,
       We => We,
