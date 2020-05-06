@@ -6,14 +6,14 @@ library work;
   use work.WasmFpgaStackWshBn_Package.all;
 
 entity WasmFpgaStack is
-    port ( 
+    port (
         Clk : in std_logic;
         nRst : in std_logic;
         Adr : in std_logic_vector(23 downto 0);
         Sel : in std_logic_vector(3 downto 0);
-        DatIn : in std_logic_vector(31 downto 0); 
+        DatIn : in std_logic_vector(31 downto 0);
         We : in std_logic;
-        Stb : in std_logic; 
+        Stb : in std_logic;
         Cyc : in std_logic_vector(0 downto 0);
         DatOut : out std_logic_vector(31 downto 0);
         Ack : out std_logic
@@ -114,7 +114,7 @@ begin
   DatOut <= StackBlk_DatOut;
 
   MaskedAdr <= Adr and WASMFPGASTORE_ADR_BLK_MASK_StackBlk;
-  
+
   process (Clk, Rst) is
   begin
     if (Rst = '1') then
@@ -147,7 +147,7 @@ begin
         RamWriteEnable <= "0";
         if (Run = '1' and Action = WASMFPGASTACK_VAL_Push) then
           if (ValueType = WASMFPGASTACK_VAL_i32 or
-              ValueType = WASMFPGASTACK_VAL_f32 or 
+              ValueType = WASMFPGASTACK_VAL_f32 or
               ValueType = WASMFPGASTACK_VAL_Label or
               ValueType = WASMFPGASTACK_VAL_Activation) then
             Busy <= '1';
@@ -165,18 +165,18 @@ begin
           end if;
         elsif(Run = '1' and Action = WASMFPGASTACK_VAL_Pop) then
           if (ValueType = WASMFPGASTACK_VAL_i32 or
-              ValueType = WASMFPGASTACK_VAL_f32 or 
+              ValueType = WASMFPGASTACK_VAL_f32 or
               ValueType = WASMFPGASTACK_VAL_Label or
               ValueType = WASMFPGASTACK_VAL_Activation) then
             Busy <= '1';
             RamEnable <= '1';
-            RamAddress <= std_logic_vector(unsigned(RamAddress) - to_unsigned(4, RamAddress'LENGTH));
+            RamAddress <= std_logic_vector(unsigned(RamAddress) - to_unsigned(1, RamAddress'LENGTH));
             StackState <= StackStatePop32Bit0;
           elsif(ValueType = WASMFPGASTACK_VAL_i64 or
                 ValueType = WASMFPGASTACK_VAL_f64) then
             Busy <= '1';
             RamEnable <= '1';
-            RamAddress <= std_logic_vector(unsigned(RamAddress) - to_unsigned(4, RamAddress'LENGTH));
+            RamAddress <= std_logic_vector(unsigned(RamAddress) - to_unsigned(1, RamAddress'LENGTH));
             StackState <= StackStatePop64Bit0;
           end if;
         end if;
@@ -185,14 +185,14 @@ begin
       --
       elsif(StackState = StackStatePush32Bit0) then
         RamWriteEnable <= "0";
-        RamAddress <= std_logic_vector(unsigned(RamAddress) + to_unsigned(4, RamAddress'LENGTH));
+        RamAddress <= std_logic_vector(unsigned(RamAddress) + to_unsigned(1, RamAddress'LENGTH));
         StackState <= StackStateIdle0;
       --
       -- Push 64 Bit
       --
       elsif(StackState = StackStatePush64Bit0) then
         RamWriteEnable <= "0";
-        RamAddress <= std_logic_vector(unsigned(RamAddress) + to_unsigned(4, RamAddress'LENGTH));
+        RamAddress <= std_logic_vector(unsigned(RamAddress) + to_unsigned(1, RamAddress'LENGTH));
         StackState <= StackStatePush64Bit1;
       elsif(StackState = StackStatePush64Bit1) then
         RamWriteEnable <= "1";
@@ -200,7 +200,7 @@ begin
         StackState <= StackStatePush64Bit2;
       elsif(StackState = StackStatePush64Bit2) then
         RamWriteEnable <= "0";
-        RamAddress <= std_logic_vector(unsigned(RamAddress) + to_unsigned(4, RamAddress'LENGTH));
+        RamAddress <= std_logic_vector(unsigned(RamAddress) + to_unsigned(1, RamAddress'LENGTH));
         StackState <= StackStateIdle0;
       --
       -- Pop 32 Bit
@@ -221,7 +221,7 @@ begin
         StackState <= StackStatePop64Bit2;
       elsif(StackState = StackStatePop64Bit2) then
         HighValue_ToBeRead <= RamDataOut;
-        RamAddress <= std_logic_vector(unsigned(RamAddress) - to_unsigned(4, RamAddress'LENGTH));
+        RamAddress <= std_logic_vector(unsigned(RamAddress) - to_unsigned(1, RamAddress'LENGTH));
         StackState <= StackStatePop64Bit3;
       elsif(StackState = StackStatePop64Bit3) then
         StackState <= StackStatePop64Bit4;
