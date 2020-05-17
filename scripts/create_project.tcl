@@ -86,6 +86,7 @@ set files [list \
  "[file normalize "${project_tb}/tb_pkg.vhd"]"\
  "[file normalize "${project_tb}/tb_std_logic_1164_additions.vhd"]"\
  "[file normalize "${project_tb}/tb_Types.vhd"]"\
+ "[file normalize "${project_tb}/tb_WbRam.vhd"]"\
 ]
 add_files -norecurse -fileset $obj $files
 
@@ -99,7 +100,7 @@ foreach i $files {
 printMessage "Adding IP cores..."
 
 set files [list \
- "[file normalize "${project_ip}/WasmFpgaStackRam/WasmFpgaStackRam.xci"]"\
+ "[file normalize "${project_ip}/WasmFpgaTestBenchRam/WasmFpgaTestBenchRam.xci"]"\
 ]
 
 add_files -fileset sources_1 $files

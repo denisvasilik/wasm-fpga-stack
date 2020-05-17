@@ -24,15 +24,24 @@ architecture behavioural of tb_WasmFpgaStack is
     signal WasmFpgaStack_FileIo : T_WasmFpgaStack_FileIo;
     signal FileIo_WasmFpgaStack : T_FileIo_WasmFpgaStack;
 
+    signal StackArea_Adr : std_logic_vector(23 downto 0);
+    signal StackArea_Sel : std_logic_vector(3 downto 0);
+    signal StackArea_We : std_logic;
+    signal StackArea_Stb : std_logic;
+    signal StackArea_DatOut : std_logic_vector(31 downto 0);
+    signal StackArea_DatIn: std_logic_vector(31 downto 0);
+    signal StackArea_Ack : std_logic;
+    signal StackArea_Cyc : std_logic_vector(0 downto 0);
+
     component WbRam is
-        port ( 
+        port (
             Clk : in std_logic;
             nRst : in std_logic;
             Adr : in std_logic_vector(23 downto 0);
             Sel : in std_logic_vector(3 downto 0);
-            DatIn : in std_logic_vector(31 downto 0); 
+            DatIn : in std_logic_vector(31 downto 0);
             We : in std_logic;
-            Stb : in std_logic; 
+            Stb : in std_logic;
             Cyc : in std_logic_vector(0 downto 0);
             DatOut : out std_logic_vector(31 downto 0);
             Ack : out std_logic
@@ -58,12 +67,20 @@ architecture behavioural of tb_WasmFpgaStack is
             nRst : in std_logic;
             Adr : in std_logic_vector(23 downto 0);
             Sel : in std_logic_vector(3 downto 0);
-            DatIn : in std_logic_vector(31 downto 0); 
+            DatIn : in std_logic_vector(31 downto 0);
             We : in std_logic;
-            Stb : in std_logic; 
+            Stb : in std_logic;
             Cyc : in std_logic_vector(0 downto 0);
             DatOut : out std_logic_vector(31 downto 0);
-            Ack : out std_logic
+            Ack : out std_logic;
+            Stack_Adr : out std_logic_vector(23 downto 0);
+            Stack_Sel : out std_logic_vector(3 downto 0);
+            Stack_We : out std_logic;
+            Stack_Stb : out std_logic;
+            Stack_DatOut : out std_logic_vector(31 downto 0);
+            Stack_DatIn: in std_logic_vector(31 downto 0);
+            Stack_Ack : in std_logic;
+            Stack_Cyc : out std_logic_vector(0 downto 0)
 		);
     end component;
 
@@ -97,6 +114,20 @@ begin
             FileIo_WasmFpgaStack => FileIo_WasmFpgaStack
         );
 
+    WbRam_i : WbRam
+        port map (
+            Clk => Clk100M,
+            nRst => nRst,
+            Adr => StackArea_Adr,
+            Sel => StackArea_Sel,
+            DatIn => StackArea_DatIn,
+            We => StackArea_We,
+            Stb => StackArea_Stb,
+            Cyc => StackArea_Cyc,
+            DatOut => StackArea_DatOut,
+            Ack => StackArea_Ack
+        );
+
     WasmFpgaStack_i : WasmFpgaStack
         port map (
             Clk => Clk100M,
@@ -108,7 +139,15 @@ begin
             Stb => FileIo_WasmFpgaStack.Stb,
             Cyc => FileIo_WasmFpgaStack.Cyc,
             DatOut => WasmFpgaStack_FileIo.DatOut,
-            Ack => WasmFpgaStack_FileIo.Ack
+            Ack => WasmFpgaStack_FileIo.Ack,
+            Stack_Adr => StackArea_Adr,
+            Stack_Sel => StackArea_Sel,
+            Stack_We => StackArea_We,
+            Stack_Stb => StackArea_Stb,
+            Stack_DatOut => StackArea_DatIn,
+            Stack_DatIn => StackArea_DatOut,
+            Stack_Ack => StackArea_Ack,
+            Stack_Cyc => StackArea_Cyc
        );
 
 end;
