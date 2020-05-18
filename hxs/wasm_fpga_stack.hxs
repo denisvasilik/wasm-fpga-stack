@@ -96,8 +96,8 @@ HwSwIf WasmFpgaStack {
                 HwAckImmediate = 'Yes';
             }
             Bits {
-                BitFieldReserved ( 31 downto 6 );
-                BitFieldEnum Run ( 5 ) 'RW_WReg_RLoopBack' {
+                BitFieldReserved ( 31 downto 5 );
+                BitFieldEnum Run ( 4 ) 'RW_WReg_RLoopBack' {
                     BitFieldDescription { ""; }
                     ValueEntries {
                         Value { 0b0 = DoNotRun ValueDescription { "Do nothing."; } }
@@ -108,13 +108,11 @@ HwSwIf WasmFpgaStack {
                         Pwr = 'X' ;
                     }
                 }
-                BitFieldEnum Action ( 4 downto 3 ) 'RW_WReg_RLoopBack' {
+                BitFieldEnum Action ( 3 ) 'RW_WReg_RLoopBack' {
                     BitFieldDescription { ""; }
                     ValueEntries {
-                        Value { 0b00 = Push ValueDescription { "Push a value onto the stack."; } }
-                        Value { 0b01 = Pop ValueDescription { "Pop a value from the stack."; } }
-                        Value { 0b10 = Clear ValueDescription { "Clear the stack."; } }
-                        Value { 0b11 = Reserved ValueDescription { "Reserved"; } }
+                        Value { 0b0 = Push ValueDescription { "Push a value onto the stack."; } }
+                        Value { 0b1 = Pop ValueDescription { "Pop a value from the stack."; } }
                     }
                     ResetValueEntry = 0b0;
                     BlockResetsAffecting {

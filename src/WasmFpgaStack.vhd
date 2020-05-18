@@ -44,7 +44,7 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
       StackBlk_Ack : out std_logic;
       StackBlk_Unoccupied_Ack : out std_logic;
       Run : out std_logic;
-      Action : out std_logic_vector(1 downto 0);
+      Action : out std_logic;
       ValueType : out std_logic_vector(2 downto 0);
       Busy : in std_logic;
       SizeValue : in std_logic_vector(31 downto 0);
@@ -76,7 +76,7 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   signal Run : std_logic;
   signal CurrentRun : std_logic;
   signal PreviousRun : std_logic;
-  signal Action : std_logic_vector(1 downto 0);
+  signal Action : std_logic;
   signal ValueType : std_logic_vector(2 downto 0);
   signal Busy : std_logic;
   signal SizeValue : std_logic_vector(31 downto 0);
@@ -153,9 +153,7 @@ begin
         Stack_Cyc <= (others => '0');
         Stack_Stb <= '0';
         Stack_We <= '0';
-        if (Run = '1' and Action = WASMFPGASTACK_VAL_Clear) then
-            StackState <= StackStateIdle0;
-        elsif (Run = '1' and Action = WASMFPGASTACK_VAL_Push) then
+        if (Run = '1' and Action = WASMFPGASTACK_VAL_Push) then
           if (ValueType = WASMFPGASTACK_VAL_i32 or
               ValueType = WASMFPGASTACK_VAL_f32 or
               ValueType = WASMFPGASTACK_VAL_Label or
