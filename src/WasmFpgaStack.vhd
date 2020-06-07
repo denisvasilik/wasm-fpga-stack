@@ -151,6 +151,7 @@ begin
       Stack_DatOut <= (others => '0');
       LowValue_ToBeRead <= (others => '0');
       HighValue_ToBeRead <= (others => '0');
+      Type_ToBeRead <= (others => '0');
       SizeValue <= (others => '0');
       StackState <= StackStateIdle0;
       ReturnStackState <= (others => '0');
