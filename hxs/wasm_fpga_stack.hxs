@@ -96,8 +96,8 @@ HwSwIf WasmFpgaStack {
                 HwAckImmediate = 'Yes';
             }
             Bits {
-                BitFieldReserved ( 31 downto 5 );
-                BitFieldEnum Run ( 4 ) 'RW_WReg_RLoopBack' {
+                BitFieldReserved ( 31 downto 2 );
+                BitFieldEnum Run ( 1 ) 'RW_WReg_RLoopBack' {
                     BitFieldDescription { ""; }
                     ValueEntries {
                         Value { 0b0 = DoNotRun ValueDescription { "Do nothing."; } }
@@ -108,26 +108,11 @@ HwSwIf WasmFpgaStack {
                         Pwr = 'X' ;
                     }
                 }
-                BitFieldEnum Action ( 3 ) 'RW_WReg_RLoopBack' {
+                BitFieldEnum Action ( 0 ) 'RW_WReg_RLoopBack' {
                     BitFieldDescription { ""; }
                     ValueEntries {
                         Value { 0b0 = Push ValueDescription { "Push a value onto the stack."; } }
                         Value { 0b1 = Pop ValueDescription { "Pop a value from the stack."; } }
-                    }
-                    ResetValueEntry = 0b0;
-                    BlockResetsAffecting {
-                        Pwr = 'X' ;
-                    }
-                }
-                BitFieldEnum ValueType ( 2 downto 0 ) 'RW_WReg_RLoopBack' {
-                    BitFieldDescription { ""; }
-                    ValueEntries {
-                        Value { 0b000 = i32 ValueDescription { "32 Bit Integer"; } }
-                        Value { 0b001 = i64 ValueDescription { "64 Bit Integer"; } }
-                        Value { 0b010 = f32 ValueDescription { "32 Bit Floating Point Data"; } }
-                        Value { 0b011 = f64 ValueDescription { "64 Bit Floarting Point Data"; } }
-                        Value { 0b100 = Label ValueDescription { "Structured Control Instructions"; } }
-                        Value { 0b101 = Activation ValueDescription { "Call Frame"; } }
                     }
                     ResetValueEntry = 0b0;
                     BlockResetsAffecting {
@@ -219,6 +204,37 @@ HwSwIf WasmFpgaStack {
             Bits {
                 BitFieldData LowValue ( 31 downto 0 ) 'RorW_WReg_RTrans' {
                     BitFieldDescription { ""; }
+                    ResetValueEntry = 0b0;
+                    BlockResetsAffecting {
+                        Pwr = 'X' ;
+                    }
+                }
+            }
+        }
+        
+        FieldDiscretePositions TypeReg ( Width = 32, Idx->Addr 0 -> 0x14 ) {
+            FieldName { "Type Register"; }
+            FieldDescription {
+                "Type of the value to push onto stack or ";
+                "type of the value that has been popped from the stack.";
+            }
+            TransferPointOfTime = '-';
+            HwConfiguration {
+                HwTypeSync = 'Yes';
+                HwAckImmediate = 'Yes';
+            }
+            Bits {
+            	BitFieldReserved ( 31 downto 3 );
+                BitFieldEnum Type ( 2 downto 0 ) 'RorW_WReg_RTrans' {
+                    BitFieldDescription { ""; }
+                    ValueEntries {
+                        Value { 0b000 = i32 ValueDescription { "32 Bit Integer"; } }
+                        Value { 0b001 = i64 ValueDescription { "64 Bit Integer"; } }
+                        Value { 0b010 = f32 ValueDescription { "32 Bit Floating Point Data"; } }
+                        Value { 0b011 = f64 ValueDescription { "64 Bit Floarting Point Data"; } }
+                        Value { 0b100 = Label ValueDescription { "Structured Control Instructions"; } }
+                        Value { 0b101 = Activation ValueDescription { "Call Frame"; } }
+                    }
                     ResetValueEntry = 0b0;
                     BlockResetsAffecting {
                         Pwr = 'X' ;

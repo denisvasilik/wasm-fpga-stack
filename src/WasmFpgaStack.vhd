@@ -45,13 +45,14 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
       StackBlk_Unoccupied_Ack : out std_logic;
       Run : out std_logic;
       Action : out std_logic;
-      ValueType : out std_logic_vector(2 downto 0);
       Busy : in std_logic;
       SizeValue : in std_logic_vector(31 downto 0);
       HighValue_ToBeRead : in std_logic_vector(31 downto 0);
       HighValue_Written : out std_logic_vector(31 downto 0);
       LowValue_ToBeRead : in std_logic_vector(31 downto 0);
-      LowValue_Written : out std_logic_vector(31 downto 0)
+      LowValue_Written : out std_logic_vector(31 downto 0);
+      Type_ToBeRead : in std_logic_vector(2 downto 0);
+      Type_Written : out std_logic_vector(2 downto 0)
     );
   end component;
 
@@ -77,13 +78,14 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   signal CurrentRun : std_logic;
   signal PreviousRun : std_logic;
   signal Action : std_logic;
-  signal ValueType : std_logic_vector(2 downto 0);
   signal Busy : std_logic;
   signal SizeValue : std_logic_vector(31 downto 0);
   signal HighValue_ToBeRead : std_logic_vector(31 downto 0);
   signal HighValue_Written : std_logic_vector(31 downto 0);
   signal LowValue_ToBeRead : std_logic_vector(31 downto 0);
   signal LowValue_Written : std_logic_vector(31 downto 0);
+  signal Type_ToBeRead : std_logic_vector(2 downto 0);
+  signal Type_Written : std_logic_vector(2 downto 0);
 
   signal MaskedAdr : std_logic_vector(23 downto 0);
 
@@ -92,19 +94,23 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   signal StackBlk_Unoccupied_Ack : std_logic;
 
   signal StackState : std_logic_vector(7 downto 0);
+  signal ReturnStackState : std_logic_vector(7 downto 0);
 
   signal StackAddress : std_logic_vector(23 downto 0);
 
   constant StackStateIdle0 : std_logic_vector(7 downto 0) := x"00";
   constant StackStatePush32Bit0 : std_logic_vector(7 downto 0) := x"01";
   constant StackStatePop32Bit0 : std_logic_vector(7 downto 0) := x"02";
-  constant StackStatePush64Bit0 : std_logic_vector(7 downto 0) := x"05";
-  constant StackStatePush64Bit1 : std_logic_vector(7 downto 0) := x"06";
-  constant StackStatePush64Bit2 : std_logic_vector(7 downto 0) := x"07";
-  constant StackStatePop64Bit0 : std_logic_vector(7 downto 0) := x"08";
-  constant StackStatePop64Bit1 : std_logic_vector(7 downto 0) := x"09";
-  constant StackStatePop64Bit2 : std_logic_vector(7 downto 0) := x"0A";
-
+  constant StackStatePush64Bit0 : std_logic_vector(7 downto 0) := x"03";
+  constant StackStatePush64Bit1 : std_logic_vector(7 downto 0) := x"04";
+  constant StackStatePush64Bit2 : std_logic_vector(7 downto 0) := x"05";
+  constant StackStatePop64Bit0 : std_logic_vector(7 downto 0) := x"06";
+  constant StackStatePop64Bit1 : std_logic_vector(7 downto 0) := x"07";
+  constant StackStatePop64Bit2 : std_logic_vector(7 downto 0) := x"08";
+  constant StackStatePushType0 : std_logic_vector(7 downto 0) := x"09";
+  constant StackStatePushType1 : std_logic_vector(7 downto 0) := x"0A";
+  constant StackStatePopType0 : std_logic_vector(7 downto 0) := x"0B";
+  constant StackStatePopType1 : std_logic_vector(7 downto 0) := x"0C";
 
   constant WASMFPGASTORE_ADR_BLK_MASK_StackBlk : std_logic_vector(23 downto 0) := x"00003F";
 
@@ -147,6 +153,7 @@ begin
       HighValue_ToBeRead <= (others => '0');
       SizeValue <= (others => '0');
       StackState <= StackStateIdle0;
+      ReturnStackState <= (others => '0');
     elsif rising_edge(Clk) then
       if(StackState = StackStateIdle0) then
         Busy <= '0';
@@ -154,10 +161,10 @@ begin
         Stack_Stb <= '0';
         Stack_We <= '0';
         if (Run = '1' and Action = WASMFPGASTACK_VAL_Push) then
-          if (ValueType = WASMFPGASTACK_VAL_i32 or
-              ValueType = WASMFPGASTACK_VAL_f32 or
-              ValueType = WASMFPGASTACK_VAL_Label or
-              ValueType = WASMFPGASTACK_VAL_Activation) then
+          if (Type_Written = WASMFPGASTACK_VAL_i32 or
+              Type_Written = WASMFPGASTACK_VAL_f32 or
+              Type_Written = WASMFPGASTACK_VAL_Label or
+              Type_Written = WASMFPGASTACK_VAL_Activation) then
             Busy <= '1';
             Stack_Cyc <= "1";
             Stack_Stb <= '1';
@@ -165,8 +172,8 @@ begin
             Stack_DatOut <= LowValue_Written;
             SizeValue <= std_logic_vector(unsigned(SizeValue) + to_unsigned(1, SizeValue'LENGTH));
             StackState <= StackStatePush32Bit0;
-          elsif(ValueType = WASMFPGASTACK_VAL_i64 or
-                ValueType = WASMFPGASTACK_VAL_f64) then
+          elsif(Type_Written = WASMFPGASTACK_VAL_i64 or
+                Type_Written = WASMFPGASTACK_VAL_f64) then
             Busy <= '1';
             Stack_Cyc <= "1";
             Stack_Stb <= '1';
@@ -176,26 +183,28 @@ begin
             StackState <= StackStatePush64Bit0;
           end if;
         elsif(Run = '1' and Action = WASMFPGASTACK_VAL_Pop) then
-          if (ValueType = WASMFPGASTACK_VAL_i32 or
-              ValueType = WASMFPGASTACK_VAL_f32 or
-              ValueType = WASMFPGASTACK_VAL_Label or
-              ValueType = WASMFPGASTACK_VAL_Activation) then
+          if (Type_Written = WASMFPGASTACK_VAL_i32 or
+              Type_Written = WASMFPGASTACK_VAL_f32 or
+              Type_Written = WASMFPGASTACK_VAL_Label or
+              Type_Written = WASMFPGASTACK_VAL_Activation) then
             Busy <= '1';
             Stack_Cyc <= "1";
             Stack_Stb <= '1';
             Stack_We <= '0';
             StackAddress <= std_logic_vector(unsigned(StackAddress) - to_unsigned(1, StackAddress'LENGTH));
             SizeValue <= std_logic_vector(unsigned(SizeValue) - to_unsigned(1, SizeValue'LENGTH));
-            StackState <= StackStatePop32Bit0;
-          elsif(ValueType = WASMFPGASTACK_VAL_i64 or
-                ValueType = WASMFPGASTACK_VAL_f64) then
+            ReturnStackState <= StackStatePop32Bit0;
+            StackState <= StackStatePopType0;
+          elsif(Type_Written = WASMFPGASTACK_VAL_i64 or
+                Type_Written = WASMFPGASTACK_VAL_f64) then
             Busy <= '1';
             Stack_Cyc <= "1";
             Stack_Stb <= '1';
             Stack_We <= '0';
             StackAddress <= std_logic_vector(unsigned(StackAddress) - to_unsigned(1, StackAddress'LENGTH));
             SizeValue <= std_logic_vector(unsigned(SizeValue) - to_unsigned(1, SizeValue'LENGTH));
-            StackState <= StackStatePop64Bit0;
+            ReturnStackState <= StackStatePop64Bit0;
+            StackState <= StackStatePopType0;
           end if;
         end if;
       --
@@ -207,6 +216,17 @@ begin
           Stack_Stb <= '0';
           Stack_We <= '0';
           StackAddress <= std_logic_vector(unsigned(StackAddress) + to_unsigned(1, StackAddress'LENGTH));
+          StackState <= StackStatePushType0;
+        end if;
+      --
+      -- Pop 32 Bit
+      --
+      elsif(StackState = StackStatePop32Bit0) then
+        if ( Stack_Ack = '1' ) then
+          Stack_Cyc <= (others => '0');
+          Stack_Stb <= '0';
+          Stack_We <= '0';
+          LowValue_ToBeRead <= Stack_DatIn;
           StackState <= StackStateIdle0;
         end if;
       --
@@ -232,18 +252,7 @@ begin
           Stack_Stb <= '0';
           Stack_We <= '0';
           StackAddress <= std_logic_vector(unsigned(StackAddress) + to_unsigned(1, StackAddress'LENGTH));
-          StackState <= StackStateIdle0;
-        end if;
-      --
-      -- Pop 32 Bit
-      --
-      elsif(StackState = StackStatePop32Bit0) then
-        if ( Stack_Ack = '1' ) then
-          Stack_Cyc <= (others => '0');
-          Stack_Stb <= '0';
-          Stack_We <= '0';
-          LowValue_ToBeRead <= Stack_DatIn;
-          StackState <= StackStateIdle0;
+          StackState <= StackStatePushType0;
         end if;
       --
       -- Pop 64 Bit
@@ -269,6 +278,40 @@ begin
           LowValue_ToBeRead <= Stack_DatIn;
           StackState <= StackStateIdle0;
         end if;
+      --
+      -- Push Type Information
+      --
+      elsif(StackState = StackStatePushType0) then
+          Stack_Cyc <= "1";
+          Stack_Stb <= '1';
+          Stack_We <= '1';
+          Stack_DatOut <= (31 downto 3 => '0') & Type_Written;
+          StackState <= StackStatePushType1;
+      elsif(StackState = StackStatePushType1) then
+        if ( Stack_Ack = '1' ) then
+          Stack_Cyc <= (others => '0');
+          Stack_Stb <= '0';
+          Stack_We <= '0';
+          StackAddress <= std_logic_vector(unsigned(StackAddress) + to_unsigned(1, StackAddress'LENGTH));
+          StackState <= StackStateIdle0;
+        end if;
+      --
+      -- Pop Type Information
+      --
+      elsif(StackState = StackStatePopType0) then
+        if ( Stack_Ack = '1' ) then
+          Stack_Cyc <= (others => '0');
+          Stack_Stb <= '0';
+          Stack_We <= '0';
+          Type_ToBeRead <= Stack_DatIn(2 downto 0);
+          StackState <= StackStatePopType1;
+        end if;
+      elsif(StackState = StackStatePopType1) then
+          Stack_Cyc <= "1";
+          Stack_Stb <= '1';
+          Stack_We <= '0';
+          StackAddress <= std_logic_vector(unsigned(StackAddress) - to_unsigned(1, StackAddress'LENGTH));
+          StackState <= ReturnStackState;
       end if;
     end if;
   end process;
@@ -288,13 +331,14 @@ begin
       StackBlk_Unoccupied_Ack => StackBlk_Unoccupied_Ack,
       Run => CurrentRun,
       Action => Action,
-      ValueType => ValueType,
       Busy => Busy,
       SizeValue => SizeValue,
       HighValue_ToBeRead => HighValue_ToBeRead,
       HighValue_Written => HighValue_Written,
       LowValue_ToBeRead => LowValue_ToBeRead,
-      LowValue_Written => LowValue_Written
+      LowValue_Written => LowValue_Written,
+      Type_ToBeRead => Type_ToBeRead,
+      Type_Written => Type_Written
     );
 
 end;
