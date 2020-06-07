@@ -227,6 +227,7 @@ begin
           Stack_Stb <= '0';
           Stack_We <= '0';
           LowValue_ToBeRead <= Stack_DatIn;
+          HighValue_ToBeRead <= (others => '0');
           StackState <= StackStateIdle0;
         end if;
       --
