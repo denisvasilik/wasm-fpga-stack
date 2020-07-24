@@ -13,15 +13,21 @@ prepare:
 project: prepare hxs
 	@vivado -mode batch -source scripts/create_project.tcl -notrace -nojournal -tempDir work -log work/vivado.log
 
-package: prepare hxs
-	@vivado -mode batch -source scripts/package_ip.tcl -notrace -nojournal -tempDir work -log work/vivado.log
+# package: prepare hxs
+#	@vivado -mode batch -source scripts/package_ip.tcl -notrace -nojournal -tempDir work -log work/vivado.log
+
+package:
+	python3 setup.py sdist bdist_wheel
 
 clean:
 	@find ip ! -iname *.xci -type f -exec rm {} +
 	@rm -rf .Xil vivado*.log vivado*.str vivado*.jou
 	@rm -rf work \
 		src-gen \
-		hxs_gen
+		hxs_gen \
+	 	*.egg-info \
+		 docs/_build \
+		 dist\
 	@rm -rf ip/**/hdl \
 		ip/**/synth \
 		ip/**/example_design \
@@ -36,4 +42,13 @@ hxs:
                -v ${PWD}/hxs_gen:/work/gen \
                registry.build.aug:5000/docker/hxs_generator:latest
 
-.PHONY: all prepare project package clean hxs
+install-from-test-pypi:
+	pip3 install --upgrade -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple wasm-fpga-stack
+
+upload-to-test-pypi: package
+	python3 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+
+docs:
+	(cd docs && make html)
+
+.PHONY: all prepare project package clean hxs docs

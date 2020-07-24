@@ -2,3 +2,5 @@ hxs_gen
 work
 ip/*
 !ip/*.xci
+*.egg-info
+dist

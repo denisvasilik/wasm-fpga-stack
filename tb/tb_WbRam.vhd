@@ -3,14 +3,14 @@ library ieee;
   use ieee.numeric_std.all;
 
 entity WbRam is
-    port ( 
+    port (
         Clk : in std_logic;
         nRst : in std_logic;
         Adr : in std_logic_vector(23 downto 0);
         Sel : in std_logic_vector(3 downto 0);
-        DatIn : in std_logic_vector(31 downto 0); 
+        DatIn : in std_logic_vector(31 downto 0);
         We : in std_logic;
-        Stb : in std_logic; 
+        Stb : in std_logic;
         Cyc : in std_logic_vector(0 downto 0);
         DatOut : out std_logic_vector(31 downto 0);
         Ack : out std_logic
@@ -20,7 +20,7 @@ end entity WbRam;
 architecture WbRamArchitecture of WbRam is
 
   component WasmFpgaTestBenchRam is
-    port ( 
+    port (
       clka : in std_logic;
       ena : in std_logic;
       wea : in std_logic_vector( 0 to 0 );
@@ -103,7 +103,7 @@ begin
   end process;
 
   WasmFpgaTestBenchRam_i : WasmFpgaTestBenchRam
-    port map ( 
+    port map (
       clka => Clk,
       ena => Enable,
       wea => WriteEnable,

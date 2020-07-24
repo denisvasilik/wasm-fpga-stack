@@ -132,6 +132,79 @@
         </spirit:portMap>
       </spirit:portMaps>
     </spirit:busInterface>
+    <spirit:busInterface>
+      <spirit:name>M_MEMORY_WB</spirit:name>
+      <spirit:displayName>M_MEMORY_WB</spirit:displayName>
+      <spirit:busType spirit:vendor="opencores.org" spirit:library="user" spirit:name="wishbone" spirit:version="1.0"/>
+      <spirit:abstractionType spirit:vendor="opencores.org" spirit:library="user" spirit:name="wishbone_rtl" spirit:version="1.0"/>
+      <spirit:master/>
+      <spirit:portMaps>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>dat_w</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>Stack_DatOut</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>stb</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>Stack_Stb</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>dat_r</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>Stack_DatIn</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>ack</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>Stack_Ack</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>sel</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>Stack_Sel</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>cyc</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>Stack_Cyc</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>adr</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>Stack_Adr</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>we</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>Stack_We</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+      </spirit:portMaps>
+    </spirit:busInterface>
   </spirit:busInterfaces>
   <spirit:model>
     <spirit:views>
@@ -174,7 +247,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>1a2ee906</spirit:value>
+            <spirit:value>32ded091</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -195,7 +268,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>d041803f</spirit:value>
+            <spirit:value>536e2ed5</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -216,7 +289,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>d041803f</spirit:value>
+            <spirit:value>536e2ed5</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -372,6 +445,130 @@
           </spirit:wireTypeDefs>
         </spirit:wire>
       </spirit:port>
+      <spirit:port>
+        <spirit:name>Stack_Adr</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+          <spirit:vector>
+            <spirit:left spirit:format="long">23</spirit:left>
+            <spirit:right spirit:format="long">0</spirit:right>
+          </spirit:vector>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>std_logic_vector</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>Stack_Sel</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+          <spirit:vector>
+            <spirit:left spirit:format="long">3</spirit:left>
+            <spirit:right spirit:format="long">0</spirit:right>
+          </spirit:vector>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>std_logic_vector</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>Stack_We</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>std_logic</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>Stack_Stb</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>std_logic</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>Stack_DatOut</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+          <spirit:vector>
+            <spirit:left spirit:format="long">31</spirit:left>
+            <spirit:right spirit:format="long">0</spirit:right>
+          </spirit:vector>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>std_logic_vector</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>Stack_DatIn</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+          <spirit:vector>
+            <spirit:left spirit:format="long">31</spirit:left>
+            <spirit:right spirit:format="long">0</spirit:right>
+          </spirit:vector>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>std_logic_vector</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>Stack_Ack</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>std_logic</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>Stack_Cyc</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+          <spirit:vector>
+            <spirit:left spirit:format="long">0</spirit:left>
+            <spirit:right spirit:format="long">0</spirit:right>
+          </spirit:vector>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>std_logic_vector</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
     </spirit:ports>
   </spirit:model>
   <spirit:fileSets>
@@ -424,6 +621,12 @@
         <spirit:userFileType>USED_IN_synthesis</spirit:userFileType>
       </spirit:file>
       <spirit:file>
+        <spirit:name>../tb/tb_WbRam.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+        <spirit:userFileType>USED_IN_simulation</spirit:userFileType>
+        <spirit:userFileType>USED_IN_synthesis</spirit:userFileType>
+      </spirit:file>
+      <spirit:file>
         <spirit:name>../tb/tb_WasmFpgaStack.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:userFileType>USED_IN_simulation</spirit:userFileType>
@@ -433,25 +636,17 @@
     <spirit:fileSet>
       <spirit:name>xilinx_anylanguagesynthesis_view_fileset</spirit:name>
       <spirit:file>
-        <spirit:name>../src/WasmFpgaStackPackage.vhd</spirit:name>
-        <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:logicalName>xil_defaultlib</spirit:logicalName>
-      </spirit:file>
-      <spirit:file>
         <spirit:name>../hxs_gen/vhd_gen/header/wasm_fpga_stack_header.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:logicalName>xil_defaultlib</spirit:logicalName>
       </spirit:file>
       <spirit:file>
         <spirit:name>../hxs_gen/vhd_gen/wishbone/wasm_fpga_stack_wishbone.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:logicalName>xil_defaultlib</spirit:logicalName>
       </spirit:file>
       <spirit:file>
         <spirit:name>../src/WasmFpgaStack.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:userFileType>CHECKSUM_c0774e6e</spirit:userFileType>
-        <spirit:logicalName>xil_defaultlib</spirit:logicalName>
+        <spirit:userFileType>CHECKSUM_bcfc3c2c</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
     <spirit:fileSet>
@@ -477,24 +672,16 @@
     <spirit:fileSet>
       <spirit:name>xilinx_anylanguagebehavioralsimulation_view_fileset</spirit:name>
       <spirit:file>
-        <spirit:name>../src/WasmFpgaStackPackage.vhd</spirit:name>
-        <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:logicalName>xil_defaultlib</spirit:logicalName>
-      </spirit:file>
-      <spirit:file>
         <spirit:name>../hxs_gen/vhd_gen/header/wasm_fpga_stack_header.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:logicalName>xil_defaultlib</spirit:logicalName>
       </spirit:file>
       <spirit:file>
         <spirit:name>../hxs_gen/vhd_gen/wishbone/wasm_fpga_stack_wishbone.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:logicalName>xil_defaultlib</spirit:logicalName>
       </spirit:file>
       <spirit:file>
         <spirit:name>../src/WasmFpgaStack.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:logicalName>xil_defaultlib</spirit:logicalName>
       </spirit:file>
     </spirit:fileSet>
     <spirit:fileSet>
@@ -535,17 +722,59 @@
         <xilinx:taxonomy>AXI_Peripheral</xilinx:taxonomy>
       </xilinx:taxonomies>
       <xilinx:displayName>WebAssembly Stack IP</xilinx:displayName>
-      <xilinx:coreRevision>20</xilinx:coreRevision>
-      <xilinx:coreCreationDateTime>2020-02-19T22:14:39Z</xilinx:coreCreationDateTime>
+      <xilinx:coreRevision>23</xilinx:coreRevision>
+      <xilinx:coreCreationDateTime>2020-07-22T21:49:06Z</xilinx:coreCreationDateTime>
       <xilinx:tags>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5cbed84e_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@19ee9aa4_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2534d7b9_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6d3d7a67_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2a3303f_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@27595ed8_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@40953a96_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3bf3bf9c_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5b9b6e97_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@202a594e_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2f925636_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5a33f386_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6af2afa3_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6c840ebe_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6324c754_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7f228080_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@40983cbe_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@250e2e5d_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1f15a36d_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6c436713_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1edf920c_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@50d78b92_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2e5d5101_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@47545fa9_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@54dc43be_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5925d339_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@260f524b_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@37d578dc_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2dd2a896_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7ae619a2_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@54b09b98_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4a72bd23_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5669e4e9_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@d74553f_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@73d84181_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@10b40662_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@59c4cc64_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3946ef64_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2c774888_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@261fe0ca_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7815e92b_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@39ad5cb8_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
       </xilinx:tags>
     </xilinx:coreExtensions>
     <xilinx:packagingInfo>
       <xilinx:xilinxVersion>2019.2</xilinx:xilinxVersion>
-      <xilinx:checksum xilinx:scope="busInterfaces" xilinx:value="1ea0cf6e"/>
-      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="2acb99a8"/>
-      <xilinx:checksum xilinx:scope="ports" xilinx:value="4db5ee6a"/>
-      <xilinx:checksum xilinx:scope="parameters" xilinx:value="89681c72"/>
+      <xilinx:checksum xilinx:scope="busInterfaces" xilinx:value="d0d6bd03"/>
+      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="3f645aaf"/>
+      <xilinx:checksum xilinx:scope="ports" xilinx:value="7fabb5b1"/>
+      <xilinx:checksum xilinx:scope="parameters" xilinx:value="0fa54017"/>
     </xilinx:packagingInfo>
   </spirit:vendorExtensions>
 </spirit:component>

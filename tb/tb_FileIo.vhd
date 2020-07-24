@@ -880,7 +880,7 @@ begin
             --  par2  1  signal value
             elsif (instruction(1 to len) = "SET_SIG") then
                 if (par1 = 16) then
- 
+
                 else
                     assert (false)
                     report " Line " & (integer'image(file_line)) & ", " & instruction(1 to len) & ": Signal not defined"

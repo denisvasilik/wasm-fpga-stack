@@ -211,7 +211,7 @@ HwSwIf WasmFpgaStack {
                 }
             }
         }
-        
+
         FieldDiscretePositions TypeReg ( Width = 32, Idx->Addr 0 -> 0x14 ) {
             FieldName { "Type Register"; }
             FieldDescription {
