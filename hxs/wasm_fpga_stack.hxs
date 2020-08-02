@@ -96,8 +96,8 @@ HwSwIf WasmFpgaStack {
                 HwAckImmediate = 'Yes';
             }
             Bits {
-                BitFieldReserved ( 31 downto 2 );
-                BitFieldEnum Run ( 1 ) 'RW_WReg_RLoopBack' {
+                BitFieldReserved ( 31 downto 3 );
+                BitFieldEnum Run ( 2 ) 'RW_WReg_RLoopBack' {
                     BitFieldDescription { ""; }
                     ValueEntries {
                         Value { 0b0 = DoNotRun ValueDescription { "Do nothing."; } }
@@ -108,11 +108,13 @@ HwSwIf WasmFpgaStack {
                         Pwr = 'X' ;
                     }
                 }
-                BitFieldEnum Action ( 0 ) 'RW_WReg_RLoopBack' {
+                BitFieldEnum Action ( 1 downto 0 ) 'RW_WReg_RLoopBack' {
                     BitFieldDescription { ""; }
                     ValueEntries {
-                        Value { 0b0 = Push ValueDescription { "Push a value onto the stack."; } }
-                        Value { 0b1 = Pop ValueDescription { "Pop a value from the stack."; } }
+                        Value { 0b00 = Push ValueDescription { "Push a value onto the stack."; } }
+                        Value { 0b01 = Pop ValueDescription { "Pop a value from the stack."; } }
+                        Value { 0b10 = LocalGet ValueDescription { "Get local of current activation frame."; } }
+                        Value { 0b11 = LocalSet ValueDescription { "Set local of current activation frame."; } }
                     }
                     ResetValueEntry = 0b0;
                     BlockResetsAffecting {
@@ -149,7 +151,7 @@ HwSwIf WasmFpgaStack {
         FieldDiscretePositions SizeReg ( Width = 32, Idx->Addr 0 -> 0x8 ) {
             FieldName { "Size Register"; }
             FieldDescription {
-                "The size of the stack in number of elements.";
+                "The stack size in number of elements on the current activation frame.";
             }
             TransferPointOfTime = '-';
             HwConfiguration {
@@ -235,6 +237,50 @@ HwSwIf WasmFpgaStack {
                         Value { 0b100 = Label ValueDescription { "Structured Control Instructions"; } }
                         Value { 0b101 = Activation ValueDescription { "Call Frame"; } }
                     }
+                    ResetValueEntry = 0b0;
+                    BlockResetsAffecting {
+                        Pwr = 'X' ;
+                    }
+                }
+            }
+        }
+
+        FieldDiscretePositions LocalIndexReg ( Width = 32, Idx->Addr 0 -> 0x18 ) {
+            FieldName { "Local Index Register"; }
+            FieldDescription {
+                "Index used by local.get or local.set instructions.";
+            }
+            TransferPointOfTime = '-';
+            HwConfiguration {
+                HwTypeSync = 'Yes';
+                HwAckImmediate = 'Yes';
+            }
+            Bits {
+                BitFieldData LocalIndex ( 31 downto 0 ) 'RW_WReg_RLoopBack' {
+                    BitFieldDescription { ""; }
+                    ResetValueEntry = 0b0;
+                    BlockResetsAffecting {
+                        Pwr = 'X' ;
+                    }
+                }
+            }
+        }
+
+        FieldDiscretePositions StackAddressReg ( Width = 32, Idx->Addr 0 -> 0x1C ) {
+            FieldName { "Stack Address Register"; }
+            FieldDescription {
+                "This register can be used to set or get the current stack address.";
+                "It is mainly used for testing purposes and may cause undefined behaviour.";
+           	}
+            TransferPointOfTime = '-';
+            HwConfiguration {
+                HwTypeSync = 'Yes';
+                HwAckImmediate = 'Yes';
+                HwAddWRegPulse = 'Yes';
+            }
+            Bits {
+                BitFieldData StackAddress ( 31 downto 0 ) 'RorW_WReg_RTrans' {
+                    BitFieldDescription { ""; }
                     ResetValueEntry = 0b0;
                     BlockResetsAffecting {
                         Pwr = 'X' ;
