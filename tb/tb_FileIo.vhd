@@ -22,7 +22,9 @@ entity tb_FileIo is
     Clk : in std_logic;
     Rst : in std_logic;
     WasmFpgaStack_FileIo : in T_WasmFpgaStack_FileIo;
-    FileIo_WasmFpgaStack : out T_FileIo_WasmFpgaStack
+    FileIo_WasmFpgaStack : out T_FileIo_WasmFpgaStack;
+    WbRam_FileIo : in T_WbRam_FileIo;
+    FileIo_WbRam : out T_FileIo_WbRam
   );
 end tb_FileIo;
 
@@ -224,6 +226,13 @@ begin
         ---------------------------------------------------------------------
 
     begin  -- process Read_file
+
+        FileIo_WbRam.Adr <= (others => '0');
+        FileIo_WbRam.Sel <= (others => '0');
+        FileIo_WbRam.DatIn <= (others => '0');
+        FileIo_WbRam.We <= '0';
+        FileIo_WbRam.Stb <= '0';
+        FileIo_WbRam.Cyc <= "0";
 
         wb_data_write <= (others => '0');
 
@@ -929,10 +938,75 @@ begin
                 wait for 0 ns;
 
 
+            -- READ RAM
+            elsif (instruction(1 to len) = "READ_RAM" or instruction(1 to len) = "VERIFY_RAM") then
+                tempAddress <= std_logic_vector(to_unsigned(par2, tempAddress'LENGTH));
+                wait for 0 ns;
+                wait until Clk'event and Clk = '1';
+
+                if (par1 = 32) then
+                    --
+                    -- Read from Module RAM using byte-addressing
+                    --
+                    FileIo_WbRam.Adr <= tempAddress(23 downto 0);
+                    FileIo_WbRam.Sel <= x"F";
+                    FileIo_WbRam.Cyc <= "1";
+                    FileIo_WbRam.Stb <= '1';
+                    FileIo_WbRam.We <= '0';
+                    wait until rising_edge(WbRam_FileIo.Ack);
+                    temp_int := to_integer(unsigned(WbRam_FileIo.DatOut));
+                    FileIo_WbRam.Sel <= x"0";
+                    FileIo_WbRam.Cyc <= "0";
+                    FileIo_WbRam.Stb <= '0';
+                    FileIo_WbRam.We <= '0';
+                    wait until Clk'event and Clk = '1';
+                else
+                    assert (false)
+                    report " Line " & (integer'image(file_line)) & ", " & instruction(1 to len) & ": wrong data width or unaligned address."
+                    severity failure;
+                end if;
+
+                update_variable(defined_vars, par3, temp_int, valid);
+
+                if(valid = 0) then
+                    assert (false)
+                    report " Line " & (integer'image(file_line)) & ", " & instruction(1 to len) & ": Not a valid Variable??"
+                    severity failure;
+                end if;
+
+                if (instruction(1 to len) = "VERIFY_RAM") then
+                    temp_stdvec_a  :=  std_logic_vector(to_unsigned(temp_int,32));
+                    temp_stdvec_b  :=  std_logic_vector(to_unsigned(par4,32));
+                    temp_stdvec_c  :=  std_logic_vector(to_unsigned(par5,32));
+
+                    if (temp_stdvec_c and temp_stdvec_a) /= (temp_stdvec_c and temp_stdvec_b) then
+                        assert (false)
+                        report " Line " & (integer'image(file_line)) & ", " & instruction(1 to len) & ":"
+                             & " address=0x" & to_hstring(tempAddress)
+                             & ", read=0x" & to_hstring(temp_stdvec_a)
+                             & ", expected=0x" & to_hstring(temp_stdvec_b)
+                             & ", mask=0x" & to_hstring(temp_stdvec_c)
+                        severity failure;
+                    end if;
+                end if;
+                wait for 0 ns;
+
+
             -- WRITE_RAM
             elsif (instruction(1 to len) = "WRITE_RAM" ) then
                 if (par1 = 32) then
-
+                    -- Write to Store (4 byte-wise)
+                    FileIo_WbRam.DatIn <= std_logic_vector(to_unsigned(par3, FileIo_WbRam.DatIn'LENGTH));
+                    FileIo_WbRam.Adr <= std_logic_vector(to_unsigned(par2, FileIo_WbRam.Adr'LENGTH));
+                    FileIo_WbRam.Sel <= x"F";
+                    FileIo_WbRam.Cyc <= "1";
+                    FileIo_WbRam.Stb <= '1';
+                    FileIo_WbRam.We <= '1';
+                    wait until rising_edge(WbRam_FileIo.Ack);
+                    FileIo_WbRam.Sel <= x"0";
+                    FileIo_WbRam.Cyc <= "0";
+                    FileIo_WbRam.Stb <= '0';
+                    FileIo_WbRam.We <= '0';
                 else
                     assert (false)
                     report " Line " & (integer'image(file_line)) & ", " & instruction(1 to len) & ": wrong data width or unaligned address."

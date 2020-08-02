@@ -24,6 +24,9 @@ architecture behavioural of tb_WasmFpgaStack is
     signal WasmFpgaStack_FileIo : T_WasmFpgaStack_FileIo;
     signal FileIo_WasmFpgaStack : T_FileIo_WasmFpgaStack;
 
+    signal WbRam_FileIo : T_WbRam_FileIo;
+    signal FileIo_WbRam : T_FileIo_WbRam;
+
     signal StackArea_Adr : std_logic_vector(23 downto 0);
     signal StackArea_Sel : std_logic_vector(3 downto 0);
     signal StackArea_We : std_logic;
@@ -33,56 +36,14 @@ architecture behavioural of tb_WasmFpgaStack is
     signal StackArea_Ack : std_logic;
     signal StackArea_Cyc : std_logic_vector(0 downto 0);
 
-    component WbRam is
-        port (
-            Clk : in std_logic;
-            nRst : in std_logic;
-            Adr : in std_logic_vector(23 downto 0);
-            Sel : in std_logic_vector(3 downto 0);
-            DatIn : in std_logic_vector(31 downto 0);
-            We : in std_logic;
-            Stb : in std_logic;
-            Cyc : in std_logic_vector(0 downto 0);
-            DatOut : out std_logic_vector(31 downto 0);
-            Ack : out std_logic
-        );
-    end component;
-
-    component tb_FileIo is
-        generic (
-            stimulus_path: in string;
-            stimulus_file: in string
-        );
-        port (
-            Clk : in std_logic;
-            Rst : in std_logic;
-            WasmFpgaStack_FileIo : in T_WasmFpgaStack_FileIo;
-            FileIo_WasmFpgaStack : out T_FileIo_WasmFpgaStack
-        );
-    end component;
-
-    component WasmFpgaStack
-        port (
-            Clk : in std_logic;
-            nRst : in std_logic;
-            Adr : in std_logic_vector(23 downto 0);
-            Sel : in std_logic_vector(3 downto 0);
-            DatIn : in std_logic_vector(31 downto 0);
-            We : in std_logic;
-            Stb : in std_logic;
-            Cyc : in std_logic_vector(0 downto 0);
-            DatOut : out std_logic_vector(31 downto 0);
-            Ack : out std_logic;
-            Stack_Adr : out std_logic_vector(23 downto 0);
-            Stack_Sel : out std_logic_vector(3 downto 0);
-            Stack_We : out std_logic;
-            Stack_Stb : out std_logic;
-            Stack_DatOut : out std_logic_vector(31 downto 0);
-            Stack_DatIn: in std_logic_vector(31 downto 0);
-            Stack_Ack : in std_logic;
-            Stack_Cyc : out std_logic_vector(0 downto 0)
-		);
-    end component;
+    signal StackMemory_Adr : std_logic_vector(23 downto 0);
+    signal StackMemory_Sel : std_logic_vector(3 downto 0);
+    signal StackMemory_We : std_logic;
+    signal StackMemory_Stb : std_logic;
+    signal StackMemory_DatOut : std_logic_vector(31 downto 0);
+    signal StackMemory_DatIn: std_logic_vector(31 downto 0);
+    signal StackMemory_Ack : std_logic;
+    signal StackMemory_Cyc : std_logic_vector(0 downto 0);
 
 begin
 
@@ -102,7 +63,7 @@ begin
         wait;
     end process;
 
-    tb_FileIo_i : tb_FileIo
+    tb_FileIo_i : entity work.tb_FileIo
         generic map (
             stimulus_path => stimulus_path,
             stimulus_file => stimulus_file
@@ -111,10 +72,25 @@ begin
             Clk => Clk100M,
             Rst => Rst,
             WasmFpgaStack_FileIo => WasmFpgaStack_FileIo,
-            FileIo_WasmFpgaStack => FileIo_WasmFpgaStack
+            FileIo_WasmFpgaStack => FileIo_WasmFpgaStack,
+            WbRam_FileIo => WbRam_FileIo,
+            FileIo_WbRam => FileIo_WbRam
         );
 
-    WbRam_i : WbRam
+    StackArea_Adr <= FileIo_WbRam.Adr when FileIo_WbRam.Cyc = "1" else StackMemory_Adr;
+    StackArea_Sel <= FileIo_WbRam.Sel when FileIo_WbRam.Cyc = "1" else StackMemory_Sel;
+    StackArea_DatIn <= FileIo_WbRam.DatIn when FileIo_WbRam.Cyc = "1" else StackMemory_DatIn;
+    StackArea_We <= FileIo_WbRam.We when FileIo_WbRam.Cyc = "1" else StackMemory_We;
+    StackArea_Stb <= FileIo_WbRam.Stb when FileIo_WbRam.Cyc = "1" else StackMemory_Stb;
+    StackArea_Cyc <= FileIo_WbRam.Cyc when FileIo_WbRam.Cyc = "1" else StackMemory_Cyc;
+
+    WbRam_FileIo.DatOut <= StackArea_DatOut;
+    WbRam_FileIo.Ack <= StackArea_Ack;
+
+    StackMemory_DatOut <= StackArea_DatOut;
+    StackMemory_Ack <= StackArea_Ack;
+
+    WbRam_i : entity work.WbRam
         port map (
             Clk => Clk100M,
             nRst => nRst,
@@ -128,7 +104,7 @@ begin
             Ack => StackArea_Ack
         );
 
-    WasmFpgaStack_i : WasmFpgaStack
+    WasmFpgaStack_i : entity work.WasmFpgaStack
         port map (
             Clk => Clk100M,
             nRst => nRst,
@@ -140,14 +116,14 @@ begin
             Cyc => FileIo_WasmFpgaStack.Cyc,
             DatOut => WasmFpgaStack_FileIo.DatOut,
             Ack => WasmFpgaStack_FileIo.Ack,
-            Stack_Adr => StackArea_Adr,
-            Stack_Sel => StackArea_Sel,
-            Stack_We => StackArea_We,
-            Stack_Stb => StackArea_Stb,
-            Stack_DatOut => StackArea_DatIn,
-            Stack_DatIn => StackArea_DatOut,
-            Stack_Ack => StackArea_Ack,
-            Stack_Cyc => StackArea_Cyc
+            Stack_Adr => StackMemory_Adr,
+            Stack_Sel => StackMemory_Sel,
+            Stack_We => StackMemory_We,
+            Stack_Stb => StackMemory_Stb,
+            Stack_DatOut => StackMemory_DatIn,
+            Stack_DatIn => StackMemory_DatOut,
+            Stack_Ack => StackMemory_Ack,
+            Stack_Cyc => StackMemory_Cyc
        );
 
 end;
