@@ -100,7 +100,13 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   constant StackStateLocalGet10 : std_logic_vector(7 downto 0) := x"1D";
   constant StackStateLocalGet11 : std_logic_vector(7 downto 0) := x"1E";
 
-  constant StackStateLocalSet0 : std_logic_vector(7 downto 0) := x"1F";
+  constant StackStateLocalSet0 : std_logic_vector(7 downto 0) := x"20";
+  constant StackStateLocalSet1 : std_logic_vector(7 downto 0) := x"21";
+  constant StackStateLocalSet2 : std_logic_vector(7 downto 0) := x"22";
+  constant StackStateLocalSet3 : std_logic_vector(7 downto 0) := x"23";
+  constant StackStateLocalSet4 : std_logic_vector(7 downto 0) := x"24";
+  constant StackStateLocalSet5 : std_logic_vector(7 downto 0) := x"25";
+  constant StackStateLocalSet6 : std_logic_vector(7 downto 0) := x"26";
 
   constant WASMFPGASTORE_ADR_BLK_MASK_StackBlk : std_logic_vector(23 downto 0) := x"00003F";
 
@@ -292,6 +298,63 @@ begin
       -- Local Set
       --
       elsif(StackState = StackStateLocalSet0) then
+        -- Local Get TypeValue
+        Stack_Cyc <= "1";
+        Stack_Stb <= '1';
+        Stack_We <= '0';
+        RestoreStackAddress <= StackAddress;
+        StackAddress <= std_logic_vector(unsigned(CurrentActivationFrameAddress) +
+                                         unsigned(ModuleInstanceUidSize) +
+                                        (unsigned(LocalIndex(21 downto 0)) & "00") +
+                                         unsigned(TypeValueOffset));
+        StackState <= StackStateLocalSet1;
+      elsif(StackState = StackStateLocalSet1) then
+        if ( Stack_Ack = '1' ) then
+          Stack_Cyc <= (others => '0');
+          Stack_Stb <= '0';
+          Stack_We <= '0';
+          Type_ToBeRead <= Stack_DatIn(2 downto 0);
+          StackState <= StackStateLocalSet2;
+        end if;
+      elsif(StackState = StackStateLocalSet2) then
+        if (Type_ToBeRead = WASMFPGASTACK_VAL_i32 or
+            Type_ToBeRead = WASMFPGASTACK_VAL_f32) then
+            StackState <= StackStateLocalSet3;
+        else
+            -- TODO: Add 64 bit values
+        end if;
+      elsif(StackState = StackStateLocalSet3) then
+            -- Pop 32 Bit (TypeValue, Value)
+            StackAddress <= RestoreStackAddress;
+            ReturnStackState <= StackStateLocalSet4;
+            StackState <= StackStatePopType0;
+      elsif(StackState = StackStateLocalSet4) then
+        if (Stack_Ack = '1') then
+          Stack_Cyc <= (others => '0');
+          Stack_Stb <= '0';
+          Stack_We <= '0';
+          LowValue_ToBeRead <= Stack_DatIn;
+          HighValue_ToBeRead <= (others => '0');
+          StackState <= StackStateLocalSet5;
+        end if;
+      elsif(StackState = StackStateLocalSet5) then
+        -- Write Value to Local Index
+        Stack_Cyc <= "1";
+        Stack_Stb <= '1';
+        Stack_We <= '1';
+        RestoreStackAddress <= StackAddress;
+        StackAddress <= std_logic_vector(unsigned(CurrentActivationFrameAddress) +
+                                         unsigned(ModuleInstanceUidSize) +
+                                        (unsigned(LocalIndex(21 downto 0)) & "00"));
+        StackState <= StackStateLocalSet6;
+      elsif(StackState = StackStateLocalSet6) then
+        if (Stack_Ack = '1') then
+          Stack_Cyc <= (others => '0');
+          Stack_Stb <= '0';
+          Stack_We <= '0';
+          StackAddress <= RestoreStackAddress;
+          StackState <= StackStateIdle0;
+        end if;
       --
       -- Push 32 Bit
       --
