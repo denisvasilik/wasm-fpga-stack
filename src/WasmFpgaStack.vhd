@@ -24,7 +24,8 @@ entity WasmFpgaStack is
         Stack_DatOut : out std_logic_vector(31 downto 0);
         Stack_DatIn: in std_logic_vector(31 downto 0);
         Stack_Ack : in std_logic;
-        Stack_Cyc : out std_logic_vector(0 downto 0)
+        Stack_Cyc : out std_logic_vector(0 downto 0);
+        Trap : out std_logic
     );
 end entity WasmFpgaStack;
 
@@ -107,6 +108,10 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   constant StackStateLocalSet4 : std_logic_vector(7 downto 0) := x"24";
   constant StackStateLocalSet5 : std_logic_vector(7 downto 0) := x"25";
   constant StackStateLocalSet6 : std_logic_vector(7 downto 0) := x"26";
+  constant StackStateLocalSet7 : std_logic_vector(7 downto 0) := x"27";
+  constant StackStateLocalSet8 : std_logic_vector(7 downto 0) := x"28";
+
+  constant StackStateError : std_logic_vector(7 downto 0) := x"FF";
 
   constant WASMFPGASTORE_ADR_BLK_MASK_StackBlk : std_logic_vector(23 downto 0) := x"00003F";
 
@@ -143,6 +148,7 @@ begin
   begin
     if (Rst = '1') then
       Busy <= '1';
+      Trap <= '0';
       Stack_Cyc <= (others => '0');
       Stack_Stb <= '0';
       Stack_Sel <= (others => '1');
@@ -177,6 +183,8 @@ begin
                 elsif(Type_Written = WASMFPGASTACK_VAL_i64 or
                       Type_Written = WASMFPGASTACK_VAL_f64) then
                     StackState <= StackStatePush64Bit0;
+                else
+                    StackState <= StackStateError;
                 end if;
             elsif(Action = WASMFPGASTACK_VAL_Pop) then
                 if (Type_Written = WASMFPGASTACK_VAL_i32 or
@@ -186,9 +194,11 @@ begin
                     ReturnStackState <= StackStatePop32Bit0;
                     StackState <= StackStatePopType0;
                 elsif(Type_Written = WASMFPGASTACK_VAL_i64 or
-                        Type_Written = WASMFPGASTACK_VAL_f64) then
+                      Type_Written = WASMFPGASTACK_VAL_f64) then
                     ReturnStackState <= StackStatePop64Bit0;
                     StackState <= StackStatePopType0;
+                else
+                    StackState <= StackStateError;
                 end if;
             elsif(Action = WASMFPGASTACK_VAL_LocalGet) then
                 StackState <= StackStateLocalGet0;
@@ -318,27 +328,56 @@ begin
         end if;
       elsif(StackState = StackStateLocalSet2) then
         if (Type_ToBeRead = WASMFPGASTACK_VAL_i32 or
-            Type_ToBeRead = WASMFPGASTACK_VAL_f32) then
-            StackState <= StackStateLocalSet3;
+            Type_ToBeRead = WASMFPGASTACK_VAL_f32 or
+            Type_ToBeRead = WASMFPGASTACK_VAL_Label or
+            Type_ToBeRead = WASMFPGASTACK_VAL_Activation) then
+              -- Pop 32 Bit (TypeValue, Value)
+              StackAddress <= RestoreStackAddress;
+              ReturnStackState <= StackStateLocalSet3;
+              StackState <= StackStatePopType0;
+        elsif(Type_ToBeRead = WASMFPGASTACK_VAL_i64 or
+              Type_ToBeRead = WASMFPGASTACK_VAL_f64) then
+              -- Pop 32 Bit (TypeValue, Value)
+              StackAddress <= RestoreStackAddress;
+              ReturnStackState <= StackStateLocalSet4;
+              StackState <= StackStatePopType0;
         else
-            -- TODO: Add 64 bit values
+            StackState <= StackStateError;
         end if;
       elsif(StackState = StackStateLocalSet3) then
-            -- Pop 32 Bit (TypeValue, Value)
-            StackAddress <= RestoreStackAddress;
-            ReturnStackState <= StackStateLocalSet4;
-            StackState <= StackStatePopType0;
-      elsif(StackState = StackStateLocalSet4) then
+        -- Pop 32 Bit (Value)
         if (Stack_Ack = '1') then
           Stack_Cyc <= (others => '0');
           Stack_Stb <= '0';
           Stack_We <= '0';
           LowValue_ToBeRead <= Stack_DatIn;
           HighValue_ToBeRead <= (others => '0');
+          StackState <= StackStateLocalSet7;
+        end if;
+      elsif(StackState = StackStateLocalSet4) then
+        -- Pop 64 Bit (Value)
+        if ( Stack_Ack = '1' ) then
+          Stack_Cyc <= (others => '0');
+          Stack_Stb <= '0';
+          Stack_We <= '0';
+          HighValue_ToBeRead <= Stack_DatIn;
           StackState <= StackStateLocalSet5;
         end if;
       elsif(StackState = StackStateLocalSet5) then
-        -- Write Value to Local Index
+        Stack_Cyc <= "1";
+        Stack_Stb <= '1';
+        StackAddress <= std_logic_vector(unsigned(StackAddress) - to_unsigned(1, StackAddress'LENGTH));
+        StackState <= StackStateLocalSet6;
+      elsif(StackState = StackStateLocalSet6) then
+        if ( Stack_Ack = '1' ) then
+          Stack_Cyc <= (others => '0');
+          Stack_Stb <= '0';
+          Stack_We <= '0';
+          LowValue_ToBeRead <= Stack_DatIn;
+          StackState <= StackStateLocalSet7;
+        end if;
+      elsif(StackState = StackStateLocalSet7) then
+        -- Write 32 Bit or 64 Bit Value to Local Index
         Stack_Cyc <= "1";
         Stack_Stb <= '1';
         Stack_We <= '1';
@@ -346,8 +385,8 @@ begin
         StackAddress <= std_logic_vector(unsigned(CurrentActivationFrameAddress) +
                                          unsigned(ModuleInstanceUidSize) +
                                         (unsigned(LocalIndex(21 downto 0)) & "00"));
-        StackState <= StackStateLocalSet6;
-      elsif(StackState = StackStateLocalSet6) then
+        StackState <= StackStateLocalSet8;
+      elsif(StackState = StackStateLocalSet8) then
         if (Stack_Ack = '1') then
           Stack_Cyc <= (others => '0');
           Stack_Stb <= '0';
@@ -485,11 +524,13 @@ begin
           StackState <= StackStatePopType2;
         end if;
       elsif(StackState = StackStatePopType2) then
-          Stack_Cyc <= "1";
-          Stack_Stb <= '1';
-          Stack_We <= '0';
-          StackAddress <= std_logic_vector(unsigned(StackAddress) - to_unsigned(1, StackAddress'LENGTH));
-          StackState <= ReturnStackState;
+        Stack_Cyc <= "1";
+        Stack_Stb <= '1';
+        Stack_We <= '0';
+        StackAddress <= std_logic_vector(unsigned(StackAddress) - to_unsigned(1, StackAddress'LENGTH));
+        StackState <= ReturnStackState;
+      elsif(StackState = StackStateError) then
+        Trap <= '1';
       end if;
     end if;
   end process;
