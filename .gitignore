@@ -1,4 +1,6 @@
 hxs_gen
+src-gen
+resources/*
 work
 ip/*
 !ip/*.xci
