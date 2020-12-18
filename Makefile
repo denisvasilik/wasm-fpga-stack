@@ -52,6 +52,9 @@ install-from-test-pypi:
 upload-to-test-pypi: package
 	python3 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
+upload-to-pypi: package
+	python3 -m twine upload --repository pypi dist/*
+
 docs:
 	(cd docs && make html)
 
