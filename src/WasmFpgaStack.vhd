@@ -395,6 +395,10 @@ begin
           StackState <= StackStateIdle0;
         end if;
       --
+      -- Local Tee
+      --
+
+      --
       -- Push 32 Bit
       --
       elsif(StackState = StackStatePush32Bit0) then
