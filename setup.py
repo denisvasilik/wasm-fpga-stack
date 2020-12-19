@@ -5,8 +5,8 @@ with open("README.md", "r") as fh:
 
 __tag__ = ""
 __build__ = 0
-__commit__ = "00000000"
-__version__ = "{}{}".format(__tag__, __build__)
+__version__ = "{}".format(__tag__)
+__commit__ = "0000000"
 
 setuptools.setup(
     name="wasm-fpga-stack",
