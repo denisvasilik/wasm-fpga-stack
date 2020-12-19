@@ -27,7 +27,8 @@ clean:
 		hxs_gen \
 	 	*.egg-info \
 		 docs/_build \
-		 dist\
+		 dist \
+		 build \
 	@rm -rf ip/**/hdl \
 		ip/**/synth \
 		ip/**/example_design \
