@@ -60,7 +60,7 @@ setuptools.setup(
                 "tb/tb_WbRam.vhd",
             ],
         ),
-        ("", ["CHANGELOG.md", "AUTHORS", "LICENSE"]),
+        ("wasm-fpga-stack", ["CHANGELOG.md", "AUTHORS", "LICENSE"]),
     ],
     setup_requires=[],
     install_requires=[],
