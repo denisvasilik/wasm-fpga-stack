@@ -3,7 +3,7 @@ set project_work  "work"
 set project_name "WasmFpgaStack"
 set project_part "xc7a100tcsg324-1"
 set project_src  "src"
-set project_src_gen "hxs_gen"
+set project_resources "resources"
 set project_ip "ip"
 set project_tb "tb"
 set project_package "package"
@@ -48,8 +48,8 @@ if {[string equal [get_filesets -quiet sources_1] ""]} {
 set obj [get_filesets sources_1]
 set files_vhd [list \
  [file normalize "${project_src}/WasmFpgaStack.vhd" ]\
- [file normalize "${project_src_gen}/vhd_gen/header/wasm_fpga_stack_header.vhd" ]\
- [file normalize "${project_src_gen}/vhd_gen/wishbone/wasm_fpga_stack_wishbone.vhd" ]\
+ [file normalize "${project_resources}/wasm_fpga_stack_header.vhd" ]\
+ [file normalize "${project_resources}/wasm_fpga_stack_wishbone.vhd" ]\
  [file normalize "${project_package}/component.xml" ]\
 ]
 add_files -norecurse -fileset $obj $files_vhd

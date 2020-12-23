@@ -51,11 +51,11 @@ setuptools.setup(
         (
             "wasm-fpga-stack/tb",
             [
+                "tb/tb_FileIo.vhd",
                 "tb/tb_pkg_helper.vhd",
                 "tb/tb_pkg.vhd",
                 "tb/tb_std_logic_1164_additions.vhd",
                 "tb/tb_Types.vhd",
-                "tb/tb_FileIo.vhd",
                 "tb/tb_WasmFpgaStack.vhd",
                 "tb/tb_WbRam.vhd",
             ],
