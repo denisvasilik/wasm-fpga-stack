@@ -33,8 +33,7 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
 
   signal Rst : std_logic;
   signal Run : std_logic;
-  signal CurrentRun : std_logic;
-  signal PreviousRun : std_logic;
+  signal WRegPulse_ControlReg : std_logic;
   signal Action : std_logic_vector(1 downto 0);
   signal Busy : std_logic;
   signal SizeValue : std_logic_vector(31 downto 0);
@@ -130,20 +129,6 @@ begin
   Stack_Adr <= StackAddress;
   StackAddress_ToBeRead <= x"00" & StackAddress;
 
-  process (Clk, Rst) is
-  begin
-    if (Rst = '1') then
-      Run <= '0';
-      PreviousRun <= '0';
-    elsif rising_edge(Clk) then
-      Run <= '0';
-      PreviousRun <= CurrentRun;
-      if (PreviousRun /= CurrentRun and CurrentRun = '1') then
-        Run <= '1';
-      end if;
-    end if;
-  end process;
-
   Stack : process (Clk, Rst) is
   begin
     if (Rst = '1') then
@@ -172,7 +157,7 @@ begin
         if (WRegPulse_StackAddressReg = '1') then
             StackAddress <= StackAddress_Written(23 downto 0);
         end if;
-        if (Run = '1') then
+        if (WRegPulse_ControlReg = '1' and Run = '1') then
             Busy <= '1';
             if (Action = WASMFPGASTACK_VAL_Push) then
                 if (Type_Written = WASMFPGASTACK_VAL_i32 or
@@ -552,8 +537,9 @@ begin
       StackBlk_DatOut => StackBlk_DatOut,
       StackBlk_Ack => StackBlk_Ack,
       StackBlk_Unoccupied_Ack => StackBlk_Unoccupied_Ack,
-      Run => CurrentRun,
+      Run => Run,
       Action => Action,
+      WRegPulse_ControlReg => WRegPulse_ControlReg,
       Busy => Busy,
       SizeValue => SizeValue,
       HighValue_ToBeRead => HighValue_ToBeRead,
