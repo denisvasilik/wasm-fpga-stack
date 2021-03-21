@@ -3,6 +3,14 @@
 This repository implements the [stack](https://www.w3.org/TR/wasm-core-1/#stack)
 used by the WebAssembly runtime.
 
+## Features
+
+* Push and pop values of various types from the stack (i32, i64, f32, f64)
+* Create and remove activation frames
+  * Activation frames have at most 1 result type (see [Function Types])
+
+[Function Types]: https://www.w3.org/TR/wasm-core-1/#function-types
+
 ## Documentation
 
 Documentation is available from [wasm-fpga.readthedocs.io].

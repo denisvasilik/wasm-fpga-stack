@@ -73,11 +73,11 @@ HwSwIf WasmFpgaStack {
         FileEndVhdlTestBench {
             "";
         }
-        BlockAddressSegmentSizes = [ 0x20 ];
+        BlockAddressSegmentSizes = [ 0x30 ];
     }
 
 
-    Block StackBlk ( Base = 0x0 , Size = 0x20 ) {
+    Block StackBlk ( Base = 0x0 , Size = 0x30 ) {
         BlockName {
             "WebAssembly Stack Block"; }
         BlockDescription { "This block describes the WebAssembly stack block."; }
@@ -98,7 +98,7 @@ HwSwIf WasmFpgaStack {
             }
             Bits {
                 BitFieldReserved ( 31 downto 3 );
-                BitFieldEnum Run ( 2 ) 'RW_WReg_RLoopBack' {
+                BitFieldEnum Run ( 3 ) 'RW_WReg_RLoopBack' {
                     BitFieldDescription { ""; }
                     ValueEntries {
                         Value { 0b0 = DoNotRun ValueDescription { "Do nothing."; } }
@@ -109,13 +109,15 @@ HwSwIf WasmFpgaStack {
                         Pwr = 'X' ;
                     }
                 }
-                BitFieldEnum Action ( 1 downto 0 ) 'RW_WReg_RLoopBack' {
+                BitFieldEnum Action ( 2 downto 0 ) 'RW_WReg_RLoopBack' {
                     BitFieldDescription { ""; }
                     ValueEntries {
-                        Value { 0b00 = Push ValueDescription { "Push a value onto the stack."; } }
-                        Value { 0b01 = Pop ValueDescription { "Pop a value from the stack."; } }
-                        Value { 0b10 = LocalGet ValueDescription { "Get local of current activation frame."; } }
-                        Value { 0b11 = LocalSet ValueDescription { "Set local of current activation frame."; } }
+                        Value { 0b000 = Push ValueDescription { "Push a value onto the stack."; } }
+                        Value { 0b001 = Pop ValueDescription { "Pop a value from the stack."; } }
+                        Value { 0b010 = LocalGet ValueDescription { "Get local of current activation frame."; } }
+                        Value { 0b011 = LocalSet ValueDescription { "Set local of current activation frame."; } }
+                        Value { 0b100 = CreateActivationFrame ValueDescription { "Create activation frame."; } }
+                        Value { 0b101 = RemoveActivationFrame ValueDescription { "Remove activation frame."; } }
                     }
                     ResetValueEntry = 0b0;
                     BlockResetsAffecting {
@@ -289,5 +291,75 @@ HwSwIf WasmFpgaStack {
                 }
             }
         }
+        
+        FieldDiscretePositions MaxLocalsReg ( Width = 32, Idx->Addr 0 -> 0x20 ) {
+            FieldName { "Max. Locals Register"; }
+            FieldDescription {
+                "This register specifies the max. number of locals of the current executing function.";
+                "When the function changes, the number of max. locals will be updated according to the ";
+                "value of the new function.";
+            }
+            TransferPointOfTime = '-';
+            HwConfiguration {
+                HwTypeSync = 'Yes';
+                HwAckImmediate = 'Yes';
+            }
+            Bits {
+                BitFieldData MaxLocals ( 31 downto 0 ) 'RW_WReg_RLoopBack' {
+                    BitFieldDescription { ""; }
+                    ResetValueEntry = 0b0;
+                    BlockResetsAffecting {
+                        Pwr = 'X' ;
+                    }
+                }
+            }
+        }
+        
+        FieldDiscretePositions MaxResultsReg ( Width = 32, Idx->Addr 0 -> 0x24 ) {
+            FieldName { "Max. Results Register"; }
+            FieldDescription {
+                "This register specifies the max. number of results of the current executing function.";
+                "When the function changes, the number of max. locals will be updated according to the ";
+                "value of the new function. In the current version of WebAssembly, the length of the result ";
+                "type vector of a valid function type may be at most 1. This restriction may be removed in ";
+                "future versions (https://www.w3.org/TR/wasm-core-1/#function-types).";
+            }
+            TransferPointOfTime = '-';
+            HwConfiguration {
+                HwTypeSync = 'Yes';
+                HwAckImmediate = 'Yes';
+            }
+            Bits {
+                BitFieldData MaxResults ( 31 downto 0 ) 'RW_WReg_RLoopBack' {
+                    BitFieldDescription { ""; }
+                    ResetValueEntry = 0b0;
+                    BlockResetsAffecting {
+                        Pwr = 'X' ;
+                    }
+                }
+            }
+        }
+        
+        FieldDiscretePositions ReturnAddressReg ( Width = 32, Idx->Addr 0 -> 0x28 ) {
+            FieldName { "Return Address Register"; }
+            FieldDescription {
+                "This register stores the return address of the current executing function.";
+            }
+            TransferPointOfTime = '-';
+            HwConfiguration {
+                HwTypeSync = 'Yes';
+                HwAckImmediate = 'Yes';
+            }
+            Bits {
+                BitFieldData ReturnAddress ( 31 downto 0 ) 'RW_WReg_RLoopBack' {
+                    BitFieldDescription { ""; }
+                    ResetValueEntry = 0b0;
+                    BlockResetsAffecting {
+                        Pwr = 'X' ;
+                    }
+                }
+            }
+        }
+
     }
 }

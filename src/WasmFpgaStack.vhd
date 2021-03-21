@@ -34,7 +34,7 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   signal Rst : std_logic;
   signal Run : std_logic;
   signal WRegPulse_ControlReg : std_logic;
-  signal Action : std_logic_vector(1 downto 0);
+  signal Action : std_logic_vector(2 downto 0);
   signal Busy : std_logic;
   signal SizeValue : std_logic_vector(31 downto 0);
   signal HighValue_ToBeRead : std_logic_vector(31 downto 0);
@@ -60,6 +60,9 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   signal WRegPulse_StackAddressReg : std_logic;
   signal RestoreStackAddress : std_logic_vector(23 downto 0);
   signal CurrentActivationFrameAddress : std_logic_vector(23 downto 0);
+  signal MaxLocals : std_logic_vector(31 downto 0);
+  signal MaxResults : std_logic_vector(31 downto 0);
+  signal ReturnAddress : std_logic_vector(31 downto 0);
 
   constant StackStateIdle0 : std_logic_vector(7 downto 0) := x"00";
 
@@ -109,6 +112,8 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   constant StackStateLocalSet6 : std_logic_vector(7 downto 0) := x"26";
   constant StackStateLocalSet7 : std_logic_vector(7 downto 0) := x"27";
   constant StackStateLocalSet8 : std_logic_vector(7 downto 0) := x"28";
+
+  constant StackStateActivationFrame0 : std_logic_vector(7 downto 0) := x"29";
 
   constant StackStateError : std_logic_vector(7 downto 0) := x"FF";
 
@@ -189,8 +194,22 @@ begin
                 StackState <= StackStateLocalGet0;
             elsif(Action = WASMFPGASTACK_VAL_LocalSet) then
                 StackState <= StackStateLocalSet0;
+            elsif(Action = WASMFPGASTACK_VAL_CreateActivationFrame) then
+                StackState <= StackStateActivationFrame0;
             end if;
         end if;
+      --
+      -- Activation Frame:
+      --
+      --  local 0
+      --  local 1
+      --  local 2
+      --  module instance id (type: activation frame)
+      --  max locals (type: activation frame)
+      --  max results (type: activation frame)
+      --  return address (type: activation frame)
+      --
+      elsif(StackState = StackStateActivationFrame0) then
       --
       -- Local Get
       --
@@ -551,7 +570,10 @@ begin
       LocalIndex => LocalIndex,
       StackAddress_ToBeRead => StackAddress_ToBeRead,
       StackAddress_Written => StackAddress_Written,
-      WRegPulse_StackAddressReg => WRegPulse_StackAddressReg
+      WRegPulse_StackAddressReg => WRegPulse_StackAddressReg,
+      MaxLocals => MaxLocals,
+      MaxResults => MaxResults,
+      ReturnAddress => ReturnAddress
     );
 
 end;
