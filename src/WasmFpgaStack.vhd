@@ -44,6 +44,7 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   signal Type_ToBeRead : std_logic_vector(2 downto 0);
   signal Type_Written : std_logic_vector(2 downto 0);
   signal LocalIndex : std_logic_vector(31 downto 0);
+  signal ModuleInstanceUid : std_logic_vector(31 downto 0);
 
   signal MaskedAdr : std_logic_vector(23 downto 0);
 
@@ -64,59 +65,6 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   signal MaxResults : std_logic_vector(31 downto 0);
   signal ReturnAddress : std_logic_vector(31 downto 0);
 
-  constant StackStateIdle0 : std_logic_vector(7 downto 0) := x"00";
-
-  constant StackStatePush32Bit0 : std_logic_vector(7 downto 0) := x"01";
-  constant StackStatePush32Bit1 : std_logic_vector(7 downto 0) := x"02";
-
-  constant StackStatePop32Bit0 : std_logic_vector(7 downto 0) := x"03";
-  constant StackStatePop32Bit1 : std_logic_vector(7 downto 0) := x"04";
-
-  constant StackStatePush64Bit0 : std_logic_vector(7 downto 0) := x"05";
-  constant StackStatePush64Bit1 : std_logic_vector(7 downto 0) := x"06";
-  constant StackStatePush64Bit2 : std_logic_vector(7 downto 0) := x"07";
-  constant StackStatePush64Bit3 : std_logic_vector(7 downto 0) := x"08";
-
-  constant StackStatePop64Bit0 : std_logic_vector(7 downto 0) := x"09";
-  constant StackStatePop64Bit1 : std_logic_vector(7 downto 0) := x"0A";
-  constant StackStatePop64Bit2 : std_logic_vector(7 downto 0) := x"0B";
-  constant StackStatePop64Bit3 : std_logic_vector(7 downto 0) := x"0C";
-
-  constant StackStatePushType0 : std_logic_vector(7 downto 0) := x"0D";
-  constant StackStatePushType1 : std_logic_vector(7 downto 0) := x"0E";
-  constant StackStatePushType2 : std_logic_vector(7 downto 0) := x"0F";
-
-  constant StackStatePopType0 : std_logic_vector(7 downto 0) := x"10";
-  constant StackStatePopType1 : std_logic_vector(7 downto 0) := x"11";
-  constant StackStatePopType2 : std_logic_vector(7 downto 0) := x"12";
-
-  constant StackStateLocalGet0 : std_logic_vector(7 downto 0) := x"13";
-  constant StackStateLocalGet1 : std_logic_vector(7 downto 0) := x"14";
-  constant StackStateLocalGet2 : std_logic_vector(7 downto 0) := x"15";
-  constant StackStateLocalGet3 : std_logic_vector(7 downto 0) := x"16";
-  constant StackStateLocalGet4 : std_logic_vector(7 downto 0) := x"17";
-  constant StackStateLocalGet5 : std_logic_vector(7 downto 0) := x"18";
-  constant StackStateLocalGet6 : std_logic_vector(7 downto 0) := x"19";
-  constant StackStateLocalGet7 : std_logic_vector(7 downto 0) := x"1A";
-  constant StackStateLocalGet8 : std_logic_vector(7 downto 0) := x"1B";
-  constant StackStateLocalGet9 : std_logic_vector(7 downto 0) := x"1C";
-  constant StackStateLocalGet10 : std_logic_vector(7 downto 0) := x"1D";
-  constant StackStateLocalGet11 : std_logic_vector(7 downto 0) := x"1E";
-
-  constant StackStateLocalSet0 : std_logic_vector(7 downto 0) := x"20";
-  constant StackStateLocalSet1 : std_logic_vector(7 downto 0) := x"21";
-  constant StackStateLocalSet2 : std_logic_vector(7 downto 0) := x"22";
-  constant StackStateLocalSet3 : std_logic_vector(7 downto 0) := x"23";
-  constant StackStateLocalSet4 : std_logic_vector(7 downto 0) := x"24";
-  constant StackStateLocalSet5 : std_logic_vector(7 downto 0) := x"25";
-  constant StackStateLocalSet6 : std_logic_vector(7 downto 0) := x"26";
-  constant StackStateLocalSet7 : std_logic_vector(7 downto 0) := x"27";
-  constant StackStateLocalSet8 : std_logic_vector(7 downto 0) := x"28";
-
-  constant StackStateActivationFrame0 : std_logic_vector(7 downto 0) := x"29";
-
-  constant StackStateError : std_logic_vector(7 downto 0) := x"FF";
-
   constant WASMFPGASTORE_ADR_BLK_MASK_StackBlk : std_logic_vector(23 downto 0) := x"00003F";
 
   constant ModuleInstanceUidSize : std_logic_vector(23 downto 0) := x"000001";
@@ -135,6 +83,55 @@ begin
   StackAddress_ToBeRead <= x"00" & StackAddress;
 
   Stack : process (Clk, Rst) is
+    constant StackStateIdle0 : std_logic_vector(7 downto 0) := x"00";
+    constant StackStatePush32Bit0 : std_logic_vector(7 downto 0) := x"01";
+    constant StackStatePush32Bit1 : std_logic_vector(7 downto 0) := x"02";
+    constant StackStatePop32Bit0 : std_logic_vector(7 downto 0) := x"03";
+    constant StackStatePop32Bit1 : std_logic_vector(7 downto 0) := x"04";
+    constant StackStatePush64Bit0 : std_logic_vector(7 downto 0) := x"05";
+    constant StackStatePush64Bit1 : std_logic_vector(7 downto 0) := x"06";
+    constant StackStatePush64Bit2 : std_logic_vector(7 downto 0) := x"07";
+    constant StackStatePush64Bit3 : std_logic_vector(7 downto 0) := x"08";
+    constant StackStatePop64Bit0 : std_logic_vector(7 downto 0) := x"09";
+    constant StackStatePop64Bit1 : std_logic_vector(7 downto 0) := x"0A";
+    constant StackStatePop64Bit2 : std_logic_vector(7 downto 0) := x"0B";
+    constant StackStatePop64Bit3 : std_logic_vector(7 downto 0) := x"0C";
+    constant StackStatePushType0 : std_logic_vector(7 downto 0) := x"0D";
+    constant StackStatePushType1 : std_logic_vector(7 downto 0) := x"0E";
+    constant StackStatePushType2 : std_logic_vector(7 downto 0) := x"0F";
+    constant StackStatePopType0 : std_logic_vector(7 downto 0) := x"10";
+    constant StackStatePopType1 : std_logic_vector(7 downto 0) := x"11";
+    constant StackStatePopType2 : std_logic_vector(7 downto 0) := x"12";
+    constant StackStateLocalGet0 : std_logic_vector(7 downto 0) := x"13";
+    constant StackStateLocalGet1 : std_logic_vector(7 downto 0) := x"14";
+    constant StackStateLocalGet2 : std_logic_vector(7 downto 0) := x"15";
+    constant StackStateLocalGet3 : std_logic_vector(7 downto 0) := x"16";
+    constant StackStateLocalGet4 : std_logic_vector(7 downto 0) := x"17";
+    constant StackStateLocalGet5 : std_logic_vector(7 downto 0) := x"18";
+    constant StackStateLocalGet6 : std_logic_vector(7 downto 0) := x"19";
+    constant StackStateLocalGet7 : std_logic_vector(7 downto 0) := x"1A";
+    constant StackStateLocalGet8 : std_logic_vector(7 downto 0) := x"1B";
+    constant StackStateLocalGet9 : std_logic_vector(7 downto 0) := x"1C";
+    constant StackStateLocalGet10 : std_logic_vector(7 downto 0) := x"1D";
+    constant StackStateLocalGet11 : std_logic_vector(7 downto 0) := x"1E";
+    constant StackStateLocalSet0 : std_logic_vector(7 downto 0) := x"20";
+    constant StackStateLocalSet1 : std_logic_vector(7 downto 0) := x"21";
+    constant StackStateLocalSet2 : std_logic_vector(7 downto 0) := x"22";
+    constant StackStateLocalSet3 : std_logic_vector(7 downto 0) := x"23";
+    constant StackStateLocalSet4 : std_logic_vector(7 downto 0) := x"24";
+    constant StackStateLocalSet5 : std_logic_vector(7 downto 0) := x"25";
+    constant StackStateLocalSet6 : std_logic_vector(7 downto 0) := x"26";
+    constant StackStateLocalSet7 : std_logic_vector(7 downto 0) := x"27";
+    constant StackStateLocalSet8 : std_logic_vector(7 downto 0) := x"28";
+    constant StackStateActivationFrame0 : std_logic_vector(7 downto 0) := x"29";
+    constant StackStateActivationFrame1 : std_logic_vector(7 downto 0) := x"29";
+    constant StackStateActivationFrame2 : std_logic_vector(7 downto 0) := x"29";
+    constant StackStateActivationFrame3 : std_logic_vector(7 downto 0) := x"29";
+    constant StackStateActivationFrame4 : std_logic_vector(7 downto 0) := x"29";
+    constant StackStateActivationFrame5 : std_logic_vector(7 downto 0) := x"29";
+    constant StackStateActivationFrame6 : std_logic_vector(7 downto 0) := x"29";
+    constant StackStateActivationFrame7 : std_logic_vector(7 downto 0) := x"29";
+    constant StackStateError : std_logic_vector(7 downto 0) := x"FF";
   begin
     if (Rst = '1') then
       Busy <= '1';
@@ -210,6 +207,69 @@ begin
       --  return address (type: activation frame)
       --
       elsif(StackState = StackStateActivationFrame0) then
+        -- Push ModuleInstanceID
+        Stack_Cyc <= "1";
+        Stack_Stb <= '1';
+        Stack_We <= '1';
+        Stack_DatOut <= ModuleInstanceUid;
+        SizeValue <= std_logic_vector(unsigned(SizeValue) + to_unsigned(1, SizeValue'LENGTH));
+        StackState <= StackStateActivationFrame1;
+      elsif(StackState = StackStateActivationFrame1) then
+        if ( Stack_Ack = '1' ) then
+          Stack_Cyc <= (others => '0');
+          Stack_Stb <= '0';
+          Stack_We <= '0';
+          StackAddress <= std_logic_vector(unsigned(StackAddress) + to_unsigned(1, StackAddress'LENGTH));
+          StackState <= StackStateActivationFrame2;
+        end if;
+      elsif(StackState = StackStateActivationFrame2) then
+        -- Push Max. Locals
+        Stack_Cyc <= "1";
+        Stack_Stb <= '1';
+        Stack_We <= '1';
+        Stack_DatOut <= MaxLocals;
+        SizeValue <= std_logic_vector(unsigned(SizeValue) + to_unsigned(1, SizeValue'LENGTH));
+        StackState <= StackStateActivationFrame3;
+      elsif(StackState = StackStateActivationFrame3) then
+        if ( Stack_Ack = '1' ) then
+          Stack_Cyc <= (others => '0');
+          Stack_Stb <= '0';
+          Stack_We <= '0';
+          StackAddress <= std_logic_vector(unsigned(StackAddress) + to_unsigned(1, StackAddress'LENGTH));
+          StackState <= StackStateActivationFrame4;
+        end if;
+      elsif(StackState = StackStateActivationFrame4) then
+        -- Push Max. Results
+        Stack_Cyc <= "1";
+        Stack_Stb <= '1';
+        Stack_We <= '1';
+        Stack_DatOut <= MaxResults;
+        SizeValue <= std_logic_vector(unsigned(SizeValue) + to_unsigned(1, SizeValue'LENGTH));
+        StackState <= StackStateActivationFrame5;
+      elsif(StackState = StackStateActivationFrame5) then
+        if ( Stack_Ack = '1' ) then
+          Stack_Cyc <= (others => '0');
+          Stack_Stb <= '0';
+          Stack_We <= '0';
+          StackAddress <= std_logic_vector(unsigned(StackAddress) + to_unsigned(1, StackAddress'LENGTH));
+          StackState <= StackStateActivationFrame6;
+        end if;
+      elsif(StackState = StackStateActivationFrame6) then
+        -- Push Return Address
+        Stack_Cyc <= "1";
+        Stack_Stb <= '1';
+        Stack_We <= '1';
+        Stack_DatOut <= ReturnAddress;
+        SizeValue <= std_logic_vector(unsigned(SizeValue) + to_unsigned(1, SizeValue'LENGTH));
+        StackState <= StackStateActivationFrame7;
+      elsif(StackState = StackStateActivationFrame7) then
+        if ( Stack_Ack = '1' ) then
+          Stack_Cyc <= (others => '0');
+          Stack_Stb <= '0';
+          Stack_We <= '0';
+          StackAddress <= std_logic_vector(unsigned(StackAddress) + to_unsigned(1, StackAddress'LENGTH));
+          StackState <= StackStateIdle0;
+        end if;
       --
       -- Local Get
       --
@@ -573,7 +633,8 @@ begin
       WRegPulse_StackAddressReg => WRegPulse_StackAddressReg,
       MaxLocals => MaxLocals,
       MaxResults => MaxResults,
-      ReturnAddress => ReturnAddress
+      ReturnAddress => ReturnAddress,
+      ModuleInstanceUid => ModuleInstanceUid
     );
 
 end;
