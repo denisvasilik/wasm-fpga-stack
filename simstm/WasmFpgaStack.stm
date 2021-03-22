@@ -19,6 +19,9 @@ BEGIN_SUB
     CALL $TEST_LOCAL_GET_64_BIT
     CALL $TEST_LOCAL_SET_32_BIT
     CALL $TEST_LOCAL_SET_64_BIT
+    CALL $TEST_CREATE_ACTIVATION_FRAME_SINGLE
+    CALL $TEST_CREATE_ACTIVATION_FRAME_MULTIPLE
+    -- CALL $TEST_REMOVE_ACTIVATION_FRAME
 
     RETURN_CALL
 END_SUB
@@ -230,25 +233,28 @@ BEGIN_SUB
     MESSAGE 0 "TEST_LOCAL_GET_32_BIT"
 
     -- Current Activation Frame
-    WRITE_RAM 32 #x0 #x0 -- ModuleInstanceUid
+    WRITE_RAM 32 #x0 #xFFFFFFFF -- Module instance UID
+    WRITE_RAM 32 #x1 #xFFFFFFFF -- Max locals
+    WRITE_RAM 32 #x2 #xFFFFFFFF -- Max results
+    WRITE_RAM 32 #x3 #xFFFFFFFF -- Return address
     -- Local 0
-    WRITE_RAM 32 #x1 #x11223344 -- LowValue
-    WRITE_RAM 32 #x2 #x0 -- HighValue
-    WRITE_RAM 32 #x3 $STACKBLK_VAL_i32 -- TypeValue
-    WRITE_RAM 32 #x4 #x0 -- Reserved
+    WRITE_RAM 32 #x4 #x11223344 -- LowValue
+    WRITE_RAM 32 #x5 #x0 -- HighValue
+    WRITE_RAM 32 #x6 $STACKBLK_VAL_i32 -- TypeValue
+    WRITE_RAM 32 #x7 #x0 -- Reserved
     -- Local 1
-    WRITE_RAM 32 #x5 #x44556677 -- LowValue
-    WRITE_RAM 32 #x6 #x0 -- HighValue
-    WRITE_RAM 32 #x7 $STACKBLK_VAL_i32 -- TypeValue
-    WRITE_RAM 32 #x8 #x0 -- Reserved
+    WRITE_RAM 32 #x8 #x44556677 -- LowValue
+    WRITE_RAM 32 #x9 #x0 -- HighValue
+    WRITE_RAM 32 #xA $STACKBLK_VAL_i32 -- TypeValue
+    WRITE_RAM 32 #xB #x0 -- Reserved
     -- Local 2
-    WRITE_RAM 32 #x9 #xAABBCCDD -- LowValue
-    WRITE_RAM 32 #xA #x0 -- HighValue
-    WRITE_RAM 32 #xB $STACKBLK_VAL_i32 -- TypeValue
-    WRITE_RAM 32 #xC #x0 -- Reserved
+    WRITE_RAM 32 #xC #xAABBCCDD -- LowValue
+    WRITE_RAM 32 #xD #x0 -- HighValue
+    WRITE_RAM 32 #xE $STACKBLK_VAL_i32 -- TypeValue
+    WRITE_RAM 32 #xF #x0 -- Reserved
 
     -- Start address of current stack frame
-    WRITE_FPGA 32 $STACKBLK_ADR_StackAddressReg #xD
+    WRITE_FPGA 32 $STACKBLK_ADR_StackAddressReg #x10
 
     EQU_VAR WB_VALUE $STACKBLK_VAL_DoRun
     OR_VAR WB_VALUE $STACKBLK_VAL_LocalGet
@@ -262,13 +268,13 @@ BEGIN_SUB
     WAIT_NS 1000
 
     -- Start address of current stack frame stays the same
-    VERIFY_FPGA 32 $STACKBLK_ADR_StackAddressReg WB_VALUE #x0D #xFF
+    VERIFY_FPGA 32 $STACKBLK_ADR_StackAddressReg WB_VALUE #x10 #xFF
 
     -- Local 1 on stack
-    VERIFY_RAM 32 #x0D WB_VALUE #x44556677 #xFF -- LowValue
-    VERIFY_RAM 32 #x0E WB_VALUE #x0 #xFF -- HighValue
-    VERIFY_RAM 32 #x0F WB_VALUE $STACKBLK_VAL_i32 #xFF -- TypeValue
-    VERIFY_RAM 32 #x10 WB_VALUE #x0 #xFF -- Reserved
+    VERIFY_RAM 32 #x10 WB_VALUE #x44556677 #xFF -- LowValue
+    VERIFY_RAM 32 #x11 WB_VALUE #x0 #xFF -- HighValue
+    VERIFY_RAM 32 #x12 WB_VALUE $STACKBLK_VAL_i32 #xFF -- TypeValue
+    VERIFY_RAM 32 #x13 WB_VALUE #x0 #xFF -- Reserved
 
     -- Local 1 provided to registers
     VERIFY_FPGA 32 $STACKBLK_ADR_LowValueReg WB_VALUE #x44556677 #xFFFFFFFF
@@ -285,25 +291,28 @@ BEGIN_SUB
     MESSAGE 0 "TEST_LOCAL_GET_64_BIT"
 
     -- Current Activation Frame
-    WRITE_RAM 32 #x0 #x0 -- ModuleInstanceUid
+    WRITE_RAM 32 #x0 #xFFFFFFFF -- Module instance UID
+    WRITE_RAM 32 #x1 #xFFFFFFFF -- Max locals
+    WRITE_RAM 32 #x2 #xFFFFFFFF -- Max results
+    WRITE_RAM 32 #x3 #xFFFFFFFF -- Return address
     -- Local 0
-    WRITE_RAM 32 #x1 #x11223344 -- LowValue
-    WRITE_RAM 32 #x2 #x55667788 -- HighValue
-    WRITE_RAM 32 #x3 $STACKBLK_VAL_i64 -- TypeValue
-    WRITE_RAM 32 #x4 #x0 -- Reserved
+    WRITE_RAM 32 #x4 #x11223344 -- LowValue
+    WRITE_RAM 32 #x5 #x55667788 -- HighValue
+    WRITE_RAM 32 #x6 $STACKBLK_VAL_i64 -- TypeValue
+    WRITE_RAM 32 #x7 #x0 -- Reserved
     -- Local 1
-    WRITE_RAM 32 #x5 #x44556677 -- LowValue
-    WRITE_RAM 32 #x6 #xAA55AA55 -- HighValue
-    WRITE_RAM 32 #x7 $STACKBLK_VAL_i64 -- TypeValue
-    WRITE_RAM 32 #x8 #x0 -- Reserved
+    WRITE_RAM 32 #x8 #x44556677 -- LowValue
+    WRITE_RAM 32 #x9 #xAA55AA55 -- HighValue
+    WRITE_RAM 32 #xA $STACKBLK_VAL_i64 -- TypeValue
+    WRITE_RAM 32 #xB #x0 -- Reserved
     -- Local 2
-    WRITE_RAM 32 #x9 #xAABBCCDD -- LowValue
-    WRITE_RAM 32 #xA #x0 -- HighValue
-    WRITE_RAM 32 #xB $STACKBLK_VAL_i32 -- TypeValue
-    WRITE_RAM 32 #xC #x0 -- Reserved
+    WRITE_RAM 32 #xC #xAABBCCDD -- LowValue
+    WRITE_RAM 32 #xD #x0 -- HighValue
+    WRITE_RAM 32 #xE $STACKBLK_VAL_i32 -- TypeValue
+    WRITE_RAM 32 #xF #x0 -- Reserved
 
     -- Start address of current stack frame
-    WRITE_FPGA 32 $STACKBLK_ADR_StackAddressReg #xD
+    WRITE_FPGA 32 $STACKBLK_ADR_StackAddressReg #x10
 
     EQU_VAR WB_VALUE $STACKBLK_VAL_DoRun
     OR_VAR WB_VALUE $STACKBLK_VAL_LocalGet
@@ -317,13 +326,13 @@ BEGIN_SUB
     WAIT_NS 1000
 
     -- Start address of current stack frame stays the same
-    VERIFY_FPGA 32 $STACKBLK_ADR_StackAddressReg WB_VALUE #x0D #xFF
+    VERIFY_FPGA 32 $STACKBLK_ADR_StackAddressReg WB_VALUE #x10 #xFF
 
     -- Local 1 on stack
-    VERIFY_RAM 32 #x0D WB_VALUE #x44556677 #xFF -- LowValue
-    VERIFY_RAM 32 #x0E WB_VALUE #xAA55AA55 #xFF -- HighValue
-    VERIFY_RAM 32 #x0F WB_VALUE $STACKBLK_VAL_i64 #xFF -- TypeValue
-    VERIFY_RAM 32 #x10 WB_VALUE #x0 #xFF -- Reserved
+    VERIFY_RAM 32 #x10 WB_VALUE #x44556677 #xFF -- LowValue
+    VERIFY_RAM 32 #x11 WB_VALUE #xAA55AA55 #xFF -- HighValue
+    VERIFY_RAM 32 #x12 WB_VALUE $STACKBLK_VAL_i64 #xFF -- TypeValue
+    VERIFY_RAM 32 #x13 WB_VALUE #x0 #xFF -- Reserved
 
     -- Local 1 provided to registers
     VERIFY_FPGA 32 $STACKBLK_ADR_LowValueReg WB_VALUE #x44556677 #xFFFFFFFF
@@ -340,28 +349,31 @@ BEGIN_SUB
     MESSAGE 0 "TEST_LOCAL_SET_32_BIT"
 
     -- Current Activation Frame
-    WRITE_RAM 32 #x0 #x0 -- ModuleInstanceUid
+    WRITE_RAM 32 #x0 #xFFFFFFFF -- Module instance UID
+    WRITE_RAM 32 #x1 #xFFFFFFFF -- Max locals
+    WRITE_RAM 32 #x2 #xFFFFFFFF -- Max results
+    WRITE_RAM 32 #x3 #xFFFFFFFF -- Return address
     -- Local 0
-    WRITE_RAM 32 #x1 #x11223344 -- LowValue
-    WRITE_RAM 32 #x2 #x0 -- HighValue
-    WRITE_RAM 32 #x3 $STACKBLK_VAL_i32 -- TypeValue
-    WRITE_RAM 32 #x4 #x0 -- Reserved
+    WRITE_RAM 32 #x4 #x11223344 -- LowValue
+    WRITE_RAM 32 #x5 #x0 -- HighValue
+    WRITE_RAM 32 #x6 $STACKBLK_VAL_i32 -- TypeValue
+    WRITE_RAM 32 #x7 #x0 -- Reserved
     -- Local 1
-    WRITE_RAM 32 #x5 #x44556677 -- LowValue
-    WRITE_RAM 32 #x6 #x0 -- HighValue
-    WRITE_RAM 32 #x7 $STACKBLK_VAL_i32 -- TypeValue
-    WRITE_RAM 32 #x8 #x0 -- Reserved
+    WRITE_RAM 32 #x8 #x44556677 -- LowValue
+    WRITE_RAM 32 #x9 #x0 -- HighValue
+    WRITE_RAM 32 #xA $STACKBLK_VAL_i32 -- TypeValue
+    WRITE_RAM 32 #xB #x0 -- Reserved
     -- Local 2
-    WRITE_RAM 32 #x9 #xAABBCCDD -- LowValue
-    WRITE_RAM 32 #xA #x0 -- HighValue
-    WRITE_RAM 32 #xB $STACKBLK_VAL_i32 -- TypeValue
-    WRITE_RAM 32 #xC #x0 -- Reserved
-    -- First Value on Stack
-    WRITE_RAM 32 #xD #xAABBCCDD -- LowValue
+    WRITE_RAM 32 #xC #xAABBCCDD -- LowValue
+    WRITE_RAM 32 #xD #x0 -- HighValue
     WRITE_RAM 32 #xE $STACKBLK_VAL_i32 -- TypeValue
+    WRITE_RAM 32 #xF #x0 -- Reserved
+    -- First Value on Stack
+    WRITE_RAM 32 #x10 #xAABBCCDD -- LowValue
+    WRITE_RAM 32 #x11 $STACKBLK_VAL_i32 -- TypeValue
 
     -- Start address of current stack frame
-    WRITE_FPGA 32 $STACKBLK_ADR_StackAddressReg #xF
+    WRITE_FPGA 32 $STACKBLK_ADR_StackAddressReg #x12
 
     EQU_VAR WB_VALUE $STACKBLK_VAL_DoRun
     OR_VAR WB_VALUE $STACKBLK_VAL_LocalSet
@@ -374,8 +386,8 @@ BEGIN_SUB
     -- Wait until operation has been finished
     WAIT_NS 1000
 
-    -- Start address of current stack frame stays the same
-    VERIFY_FPGA 32 $STACKBLK_ADR_StackAddressReg WB_VALUE #x0D #xFF
+    -- Start address of current stack frame
+    VERIFY_FPGA 32 $STACKBLK_ADR_StackAddressReg WB_VALUE #x10 #xFF
 
     -- Local 1 provided to registers
     VERIFY_FPGA 32 $STACKBLK_ADR_LowValueReg WB_VALUE #xAABBCCDD #xFFFFFFFF
@@ -392,29 +404,32 @@ BEGIN_SUB
     MESSAGE 0 "TEST_LOCAL_SET_64_BIT"
 
     -- Current Activation Frame
-    WRITE_RAM 32 #x0 #x0 -- ModuleInstanceUid
+    WRITE_RAM 32 #x0 #xFFFFFFFF -- Module instance UID
+    WRITE_RAM 32 #x1 #xFFFFFFFF -- Max locals
+    WRITE_RAM 32 #x2 #xFFFFFFFF -- Max results
+    WRITE_RAM 32 #x3 #xFFFFFFFF -- Return address
     -- Local 0
-    WRITE_RAM 32 #x1 #x11223344 -- LowValue
-    WRITE_RAM 32 #x2 #x0 -- HighValue
-    WRITE_RAM 32 #x3 $STACKBLK_VAL_i32 -- TypeValue
-    WRITE_RAM 32 #x4 #x0 -- Reserved
+    WRITE_RAM 32 #x4 #x11223344 -- LowValue
+    WRITE_RAM 32 #x5 #x0 -- HighValue
+    WRITE_RAM 32 #x6 $STACKBLK_VAL_i32 -- TypeValue
+    WRITE_RAM 32 #x7 #x0 -- Reserved
     -- Local 1
-    WRITE_RAM 32 #x5 #x44556677 -- LowValue
-    WRITE_RAM 32 #x6 #xAA55AA55 -- HighValue
-    WRITE_RAM 32 #x7 $STACKBLK_VAL_i64 -- TypeValue
-    WRITE_RAM 32 #x8 #x0 -- Reserved
+    WRITE_RAM 32 #x8 #x44556677 -- LowValue
+    WRITE_RAM 32 #x9 #xAA55AA55 -- HighValue
+    WRITE_RAM 32 #xA $STACKBLK_VAL_i64 -- TypeValue
+    WRITE_RAM 32 #xB #x0 -- Reserved
     -- Local 2
-    WRITE_RAM 32 #x9 #xAABBCCDD -- LowValue
-    WRITE_RAM 32 #xA #x0 -- HighValue
-    WRITE_RAM 32 #xB $STACKBLK_VAL_i32 -- TypeValue
-    WRITE_RAM 32 #xC #x0 -- Reserved
+    WRITE_RAM 32 #xC #xAABBCCDD -- LowValue
+    WRITE_RAM 32 #xD #x0 -- HighValue
+    WRITE_RAM 32 #xE $STACKBLK_VAL_i32 -- TypeValue
+    WRITE_RAM 32 #xF #x0 -- Reserved
     -- First Value on Stack
-    WRITE_RAM 32 #xD #xAABBCCDD -- LowValue
-    WRITE_RAM 32 #xE #x11223344 -- HighValue
-    WRITE_RAM 32 #xF $STACKBLK_VAL_i64 -- TypeValue
+    WRITE_RAM 32 #x10 #xAABBCCDD -- LowValue
+    WRITE_RAM 32 #x11 #x11223344 -- HighValue
+    WRITE_RAM 32 #x12 $STACKBLK_VAL_i64 -- TypeValue
 
     -- Start address of current stack frame
-    WRITE_FPGA 32 $STACKBLK_ADR_StackAddressReg #x10
+    WRITE_FPGA 32 $STACKBLK_ADR_StackAddressReg #x13
 
     EQU_VAR WB_VALUE $STACKBLK_VAL_DoRun
     OR_VAR WB_VALUE $STACKBLK_VAL_LocalSet
@@ -427,14 +442,93 @@ BEGIN_SUB
     -- Wait until operation has been finished
     WAIT_NS 1000
 
-    -- Start address of current stack frame stays the same
-    VERIFY_FPGA 32 $STACKBLK_ADR_StackAddressReg WB_VALUE #x0D #xFF
+    -- Start address of current stack frame
+    VERIFY_FPGA 32 $STACKBLK_ADR_StackAddressReg WB_VALUE #x10 #xFF
 
     -- Local 1 provided to registers
     VERIFY_FPGA 32 $STACKBLK_ADR_LowValueReg WB_VALUE #xAABBCCDD #xFFFFFFFF
     VERIFY_FPGA 32 $STACKBLK_ADR_HighValueReg WB_VALUE #x11223344 #xFFFFFFFF
     VERIFY_FPGA 32 $STACKBLK_ADR_TypeReg WB_VALUE $STACKBLK_VAL_i64 #xFFFFFFFF
     VERIFY_FPGA 32 $STACKBLK_ADR_LocalIndexReg WB_VALUE #x1 #xFFFFFFFF
+
+    RETURN_CALL
+END_SUB
+
+TEST_CREATE_ACTIVATION_FRAME_SINGLE:
+BEGIN_SUB
+    MESSAGE 0 "TEST_CREATE_ACTIVATION_FRAME"
+
+    -- Start address of current stack frame
+    WRITE_FPGA 32 $STACKBLK_ADR_StackAddressReg #x0
+
+    WRITE_FPGA 32 $STACKBLK_ADR_ModuleInstanceUidReg #x12345678
+    WRITE_FPGA 32 $STACKBLK_ADR_MaxLocalsReg #xAA55AA55
+    WRITE_FPGA 32 $STACKBLK_ADR_MaxResultsReg #x77884422
+    WRITE_FPGA 32 $STACKBLK_ADR_ReturnAddressReg #x99112288
+
+    EQU_VAR WB_VALUE $STACKBLK_VAL_DoRun
+    OR_VAR WB_VALUE $STACKBLK_VAL_CreateActivationFrame
+    EQU_VAR WB_EXPECTED_VALUE $WB_VALUE
+    WRITE_FPGA 32 $STACKBLK_ADR_ControlReg $WB_VALUE
+    VERIFY_FPGA 32 $STACKBLK_ADR_ControlReg WB_VALUE $WB_EXPECTED_VALUE #xFFFFFFFF
+
+    -- Wait until operation has been finished
+    WAIT_NS 1000
+
+    VERIFY_RAM 32 #x0 WB_VALUE #x12345678 #xFFFFFFFF
+    VERIFY_RAM 32 #x1 WB_VALUE #xAA55AA55 #xFFFFFFFF
+    VERIFY_RAM 32 #x2 WB_VALUE #x77884422 #xFFFFFFFF
+    VERIFY_RAM 32 #x3 WB_VALUE #x99112288 #xFFFFFFFF
+
+    RETURN_CALL
+END_SUB
+
+TEST_CREATE_ACTIVATION_FRAME_MULTIPLE:
+BEGIN_SUB
+    MESSAGE 0 "TEST_CREATE_ACTIVATION_FRAME_MULTIPLE"
+
+    -- Start address of current stack frame
+    WRITE_FPGA 32 $STACKBLK_ADR_StackAddressReg #x0
+
+    -- First activation frame
+    WRITE_FPGA 32 $STACKBLK_ADR_ModuleInstanceUidReg #x12345678
+    WRITE_FPGA 32 $STACKBLK_ADR_MaxLocalsReg #xAA55AA55
+    WRITE_FPGA 32 $STACKBLK_ADR_MaxResultsReg #x77884422
+    WRITE_FPGA 32 $STACKBLK_ADR_ReturnAddressReg #x99112288
+
+    EQU_VAR WB_VALUE $STACKBLK_VAL_DoRun
+    OR_VAR WB_VALUE $STACKBLK_VAL_CreateActivationFrame
+    EQU_VAR WB_EXPECTED_VALUE $WB_VALUE
+    WRITE_FPGA 32 $STACKBLK_ADR_ControlReg $WB_VALUE
+    VERIFY_FPGA 32 $STACKBLK_ADR_ControlReg WB_VALUE $WB_EXPECTED_VALUE #xFFFFFFFF
+
+    -- Wait until operation has been finished
+    WAIT_NS 1000
+
+    VERIFY_RAM 32 #x0 WB_VALUE #x12345678 #xFFFFFFFF
+    VERIFY_RAM 32 #x1 WB_VALUE #xAA55AA55 #xFFFFFFFF
+    VERIFY_RAM 32 #x2 WB_VALUE #x77884422 #xFFFFFFFF
+    VERIFY_RAM 32 #x3 WB_VALUE #x99112288 #xFFFFFFFF
+
+    -- Second activation frame
+    WRITE_FPGA 32 $STACKBLK_ADR_ModuleInstanceUidReg #xBBCCDDEE
+    WRITE_FPGA 32 $STACKBLK_ADR_MaxLocalsReg #xAA11BB22
+    WRITE_FPGA 32 $STACKBLK_ADR_MaxResultsReg #xCAFEBABE
+    WRITE_FPGA 32 $STACKBLK_ADR_ReturnAddressReg #x99887766
+
+    EQU_VAR WB_VALUE $STACKBLK_VAL_DoRun
+    OR_VAR WB_VALUE $STACKBLK_VAL_CreateActivationFrame
+    EQU_VAR WB_EXPECTED_VALUE $WB_VALUE
+    WRITE_FPGA 32 $STACKBLK_ADR_ControlReg $WB_VALUE
+    VERIFY_FPGA 32 $STACKBLK_ADR_ControlReg WB_VALUE $WB_EXPECTED_VALUE #xFFFFFFFF
+
+    -- Wait until operation has been finished
+    WAIT_NS 1000
+
+    VERIFY_RAM 32 #x4 WB_VALUE #xBBCCDDEE #xFFFFFFFF
+    VERIFY_RAM 32 #x5 WB_VALUE #xAA11BB22 #xFFFFFFFF
+    VERIFY_RAM 32 #x6 WB_VALUE #xCAFEBABE #xFFFFFFFF
+    VERIFY_RAM 32 #x7 WB_VALUE #x99887766 #xFFFFFFFF
 
     RETURN_CALL
 END_SUB
