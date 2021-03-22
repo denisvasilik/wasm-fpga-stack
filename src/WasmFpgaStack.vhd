@@ -27,7 +27,7 @@ entity WasmFpgaStack is
         Stack_Cyc : out std_logic_vector(0 downto 0);
         Trap : out std_logic
     );
-end entity WasmFpgaStack;
+end;
 
 architecture WasmFpgaStackArchitecture of WasmFpgaStack is
 
@@ -67,7 +67,7 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
 
   constant WASMFPGASTORE_ADR_BLK_MASK_StackBlk : std_logic_vector(23 downto 0) := x"00003F";
 
-  constant ModuleInstanceUidSize : std_logic_vector(23 downto 0) := x"000001";
+  constant ActivationFrameSize : std_logic_vector(23 downto 0) := x"000004";
   constant TypeValueOffset : std_logic_vector(23 downto 0) := x"000002";
 
 begin
@@ -124,13 +124,13 @@ begin
     constant StackStateLocalSet7 : std_logic_vector(7 downto 0) := x"27";
     constant StackStateLocalSet8 : std_logic_vector(7 downto 0) := x"28";
     constant StackStateActivationFrame0 : std_logic_vector(7 downto 0) := x"29";
-    constant StackStateActivationFrame1 : std_logic_vector(7 downto 0) := x"29";
-    constant StackStateActivationFrame2 : std_logic_vector(7 downto 0) := x"29";
-    constant StackStateActivationFrame3 : std_logic_vector(7 downto 0) := x"29";
-    constant StackStateActivationFrame4 : std_logic_vector(7 downto 0) := x"29";
-    constant StackStateActivationFrame5 : std_logic_vector(7 downto 0) := x"29";
-    constant StackStateActivationFrame6 : std_logic_vector(7 downto 0) := x"29";
-    constant StackStateActivationFrame7 : std_logic_vector(7 downto 0) := x"29";
+    constant StackStateActivationFrame1 : std_logic_vector(7 downto 0) := x"2A";
+    constant StackStateActivationFrame2 : std_logic_vector(7 downto 0) := x"2B";
+    constant StackStateActivationFrame3 : std_logic_vector(7 downto 0) := x"2C";
+    constant StackStateActivationFrame4 : std_logic_vector(7 downto 0) := x"2D";
+    constant StackStateActivationFrame5 : std_logic_vector(7 downto 0) := x"2E";
+    constant StackStateActivationFrame6 : std_logic_vector(7 downto 0) := x"2F";
+    constant StackStateActivationFrame7 : std_logic_vector(7 downto 0) := x"30";
     constant StackStateError : std_logic_vector(7 downto 0) := x"FF";
   begin
     if (Rst = '1') then
@@ -280,7 +280,7 @@ begin
         Stack_We <= '0';
         RestoreStackAddress <= StackAddress;
         StackAddress <= std_logic_vector(unsigned(CurrentActivationFrameAddress) +
-                                         unsigned(ModuleInstanceUidSize) +
+                                         unsigned(ActivationFrameSize) +
                                         (unsigned(LocalIndex(21 downto 0)) & "00") +
                                          unsigned(TypeValueOffset));
         StackState <= StackStateLocalGet1;
@@ -378,7 +378,7 @@ begin
         Stack_We <= '0';
         RestoreStackAddress <= StackAddress;
         StackAddress <= std_logic_vector(unsigned(CurrentActivationFrameAddress) +
-                                         unsigned(ModuleInstanceUidSize) +
+                                         unsigned(ActivationFrameSize) +
                                         (unsigned(LocalIndex(21 downto 0)) & "00") +
                                          unsigned(TypeValueOffset));
         StackState <= StackStateLocalSet1;
@@ -447,7 +447,7 @@ begin
         Stack_We <= '1';
         RestoreStackAddress <= StackAddress;
         StackAddress <= std_logic_vector(unsigned(CurrentActivationFrameAddress) +
-                                         unsigned(ModuleInstanceUidSize) +
+                                         unsigned(ActivationFrameSize) +
                                         (unsigned(LocalIndex(21 downto 0)) & "00"));
         StackState <= StackStateLocalSet8;
       elsif(StackState = StackStateLocalSet8) then
