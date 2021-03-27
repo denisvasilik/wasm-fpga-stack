@@ -57,8 +57,6 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   signal ReturnStackState : std_logic_vector(7 downto 0);
 
   signal StackAddress : std_logic_vector(23 downto 0);
-  signal StackLowValue : std_logic_vector(31 downto 0);
-  signal StackType : std_logic_vector(31 downto 0);
   signal StackAddress_ToBeRead : std_logic_vector(31 downto 0);
   signal StackAddress_Written : std_logic_vector(31 downto 0);
   signal WRegPulse_StackAddressReg : std_logic;
@@ -163,8 +161,6 @@ begin
           Stb => '0',
           Cyc => (others => '0')
       );
-      StackLowValue <= (others => '0');
-      StackType <= (others => '0');
       RestoreStackAddress <= (others => '0');
       StackAddress <= (others => '0');
       LowValue_ToBeRead <= (others => '0');
@@ -208,8 +204,7 @@ begin
                     StackState <= StackStatePop32Bit0;
                 elsif(Type_Written = WASMFPGASTACK_VAL_i64 or
                       Type_Written = WASMFPGASTACK_VAL_f64) then
-                    ReturnStackState <= StackStatePop64Bit0;
-                    StackState <= StackStatePopType0;
+                    StackState <= StackStatePop64Bit0;
                 else
                     StackState <= StackStateError;
                 end if;
@@ -257,20 +252,72 @@ begin
       -- if (Type_Written = WASMFPGASTACK_VAL_Activation) then
       --    CurrentActivationFrameAddress <= StackAddress;
       -- end if;
+
+      --
+      -- Push 64 Bit
+      --
+      elsif(StackState = StackStatePush64Bit0) then
+        PushToStack64(PushToStackState,
+                      ToStackMemory,
+                      FromStackMemory,
+                      StackAddress,
+                      LowValue_Written,
+                      HighValue_Written,
+                      Type_Written);
+        if (PushToStackState = StateEnd) then
+            SizeValue <= std_logic_vector(
+                unsigned(SizeValue) + to_unsigned(1, SizeValue'LENGTH)
+            );
+            StackState <= StackStateIdle0;
+        end if;
+      --
+      -- Pop 64 Bit
+      --
+      elsif(StackState = StackStatePop64Bit0) then
+        PopFromStack64(PopFromStackState,
+                       ToStackMemory,
+                       FromStackMemory,
+                       StackAddress,
+                       LowValue_ToBeRead,
+                       HighValue_ToBeRead,
+                       Type_ToBeRead);
+        if (PopFromStackState = StateEnd) then
+            SizeValue <= std_logic_vector(
+                unsigned(SizeValue) - to_unsigned(1, SizeValue'LENGTH)
+            );
+            StackState <= StackStateIdle0;
+        end if;
+      --
+      -- Push 32 Bit
+      --
+      elsif(StackState = StackStatePush32Bit0) then
+        PushToStack32(PushToStackState,
+                      ToStackMemory,
+                      FromStackMemory,
+                      StackAddress,
+                      LowValue_Written,
+                      Type_Written);
+        if (PushToStackState = StateEnd) then
+            SizeValue <= std_logic_vector(
+                unsigned(SizeValue) + to_unsigned(1, SizeValue'LENGTH)
+            );
+            StackState <= StackStateIdle0;
+        end if;
       --
       -- Pop 32 Bit
       --
       elsif(StackState = StackStatePop32Bit0) then
         PopFromStack32(PopFromStackState,
-                       FromStackMemory,
                        ToStackMemory,
+                       FromStackMemory,
                        StackAddress,
-                       StackLowValue,
-                       StackType);
+                       LowValue_ToBeRead,
+                       Type_ToBeRead);
         if (PopFromStackState = StateEnd) then
-            LowValue_ToBeRead <= StackLowValue;
             HighValue_ToBeRead <= (others => '0');
-            Type_ToBeRead <= StackType(2 downto 0);
+            SizeValue <= std_logic_vector(
+                unsigned(SizeValue) - to_unsigned(1, SizeValue'LENGTH)
+            );
             StackState <= StackStateIdle0;
         end if;
       elsif(StackState = StackStateError) then

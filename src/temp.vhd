@@ -191,43 +191,6 @@
       --
 
       --
-      -- Push 32 Bit
-      --
-      elsif(StackState = StackStatePush32Bit0) then
-        if (Type_Written = WASMFPGASTACK_VAL_Activation) then
-            CurrentActivationFrameAddress <= StackAddress;
-        end if;
-        Stack_Cyc <= "1";
-        Stack_Stb <= '1';
-        Stack_We <= '1';
-        Stack_DatOut <= LowValue_Written;
-        SizeValue <= std_logic_vector(unsigned(SizeValue) + to_unsigned(1, SizeValue'LENGTH));
-        ReturnStackState <= StackStateIdle0;
-        StackState <= StackStatePush32Bit1;
-      elsif(StackState = StackStatePush32Bit1) then
-        if ( Stack_Ack = '1' ) then
-          Stack_Cyc <= (others => '0');
-          Stack_Stb <= '0';
-          Stack_We <= '0';
-          StackAddress <= std_logic_vector(unsigned(StackAddress) + to_unsigned(1, StackAddress'LENGTH));
-          StackState <= StackStatePushType0;
-        end if;
-      --
-      -- Pop 32 Bit
-      --
-      elsif(StackState = StackStatePop32Bit0) then
-        if ( Stack_Ack = '1' ) then
-          if (Type_Written = WASMFPGASTACK_VAL_Activation) then
-              CurrentActivationFrameAddress <= StackAddress;
-          end if;
-          Stack_Cyc <= (others => '0');
-          Stack_Stb <= '0';
-          Stack_We <= '0';
-          LowValue_ToBeRead <= Stack_DatIn;
-          HighValue_ToBeRead <= (others => '0');
-          StackState <= StackStateIdle0;
-        end if;
-      --
       -- Push 64 Bit
       --
       elsif(StackState = StackStatePush64Bit0) then
@@ -260,6 +223,9 @@
           StackAddress <= std_logic_vector(unsigned(StackAddress) + to_unsigned(1, StackAddress'LENGTH));
           StackState <= StackStatePushType0;
         end if;
+
+
+
       --
       -- Pop 64 Bit
       --
@@ -284,6 +250,30 @@
           LowValue_ToBeRead <= Stack_DatIn;
           StackState <= StackStateIdle0;
         end if;
+
+      --
+      -- Push 32 Bit
+      --
+      elsif(StackState = StackStatePush32Bit0) then
+        if (Type_Written = WASMFPGASTACK_VAL_Activation) then
+            CurrentActivationFrameAddress <= StackAddress;
+        end if;
+        Stack_Cyc <= "1";
+        Stack_Stb <= '1';
+        Stack_We <= '1';
+        Stack_DatOut <= LowValue_Written;
+        SizeValue <= std_logic_vector(unsigned(SizeValue) + to_unsigned(1, SizeValue'LENGTH));
+        ReturnStackState <= StackStateIdle0;
+        StackState <= StackStatePush32Bit1;
+      elsif(StackState = StackStatePush32Bit1) then
+        if ( Stack_Ack = '1' ) then
+          Stack_Cyc <= (others => '0');
+          Stack_Stb <= '0';
+          Stack_We <= '0';
+          StackAddress <= std_logic_vector(unsigned(StackAddress) + to_unsigned(1, StackAddress'LENGTH));
+          StackState <= StackStatePushType0;
+        end if;
+
       --
       -- Push Type Information
       --
@@ -302,7 +292,21 @@
           StackState <= ReturnStackState;
         end if;
 
-
+      --
+      -- Pop 32 Bit
+      --
+      elsif(StackState = StackStatePop32Bit0) then
+        if ( Stack_Ack = '1' ) then
+          if (Type_Written = WASMFPGASTACK_VAL_Activation) then
+              CurrentActivationFrameAddress <= StackAddress;
+          end if;
+          Stack_Cyc <= (others => '0');
+          Stack_Stb <= '0';
+          Stack_We <= '0';
+          LowValue_ToBeRead <= Stack_DatIn;
+          HighValue_ToBeRead <= (others => '0');
+          StackState <= StackStateIdle0;
+        end if;
 
       --
       -- Pop Type Information

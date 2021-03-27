@@ -54,11 +54,27 @@ package WasmFpgaStackPackage is
                             signal StackValue : in std_logic_vector;
                             constant StackType : in std_logic_vector);
 
+    procedure PushToStack64(signal State : inout std_logic_vector;
+                            signal ToStackMemory : out T_ToWishbone;
+                            signal FromStackMemory : in T_FromWishbone;
+                            signal StackAddress : inout std_logic_vector;
+                            signal StackLowValue : in std_logic_vector;
+                            signal StackHighValue : in std_logic_vector;
+                            constant StackType : in std_logic_vector);
+
     procedure PopFromStack32(signal State: inout std_logic_vector;
-                             signal FromStackMemory: in T_FromWishbone;
                              signal ToStackMemory: out T_ToWishbone;
+                             signal FromStackMemory: in T_FromWishbone;
                              signal StackAddress: inout std_logic_vector;
                              signal StackValue: out std_logic_vector;
+                             signal StackType: out std_logic_vector);
+
+    procedure PopFromStack64(signal State: inout std_logic_vector;
+                             signal ToStackMemory: out T_ToWishbone;
+                             signal FromStackMemory: in T_FromWishbone;
+                             signal StackAddress: inout std_logic_vector;
+                             signal StackLowValue: out std_logic_vector;
+                             signal StackHighValue: out std_logic_vector;
                              signal StackType: out std_logic_vector);
 
 end;
@@ -187,9 +203,80 @@ package body WasmFpgaStackPackage is
         end if;
     end;
 
+    procedure PushToStack64(signal State : inout std_logic_vector;
+                            signal ToStackMemory : out T_ToWishbone;
+                            signal FromStackMemory : in T_FromWishbone;
+                            signal StackAddress : inout std_logic_vector;
+                            signal StackLowValue : in std_logic_vector;
+                            signal StackHighValue : in std_logic_vector;
+                            constant StackType : in std_logic_vector) is
+    begin
+        if (State = StateIdle) then
+            State <= State0;
+        elsif (State = State0) then
+            -- Push low value to stack
+            ToStackMemory.DatIn <= StackLowValue;
+            ToStackMemory.Adr <= StackAddress;
+            ToStackMemory.Cyc <= "1";
+            ToStackMemory.Stb <= '1';
+            ToStackMemory.We <= '1';
+            State <= State1;
+        elsif (State = State1) then
+            if (FromStackMemory.Ack = '1') then
+                ToStackMemory.Cyc <= "0";
+                ToStackMemory.Stb <= '0';
+                ToStackMemory.We <= '0';
+                StackAddress <= std_logic_vector(
+                    unsigned(StackAddress) + to_unsigned(1, StackAddress'LENGTH)
+                );
+                State <= State2;
+            end if;
+        elsif(State = State2) then
+            -- Push high value to stack
+            ToStackMemory.DatIn <= StackHighValue;
+            ToStackMemory.Adr <= StackAddress;
+            ToStackMemory.Cyc <= "1";
+            ToStackMemory.Stb <= '1';
+            ToStackMemory.We <= '1';
+            State <= State3;
+        elsif(State = State3) then
+            if (FromStackMemory.Ack = '1') then
+                ToStackMemory.Cyc <= "0";
+                ToStackMemory.Stb <= '0';
+                ToStackMemory.We <= '0';
+                StackAddress <= std_logic_vector(
+                    unsigned(StackAddress) + to_unsigned(1, StackAddress'LENGTH)
+                );
+                State <= State4;
+            end if;
+        elsif(State = State4) then
+            -- Push high value to stack
+            ToStackMemory.DatIn <= (31 downto 3 => '0') & StackType;
+            ToStackMemory.Adr <= StackAddress;
+            ToStackMemory.Cyc <= "1";
+            ToStackMemory.Stb <= '1';
+            ToStackMemory.We <= '1';
+            State <= State5;
+        elsif(State = State5) then
+            if (FromStackMemory.Ack = '1') then
+                ToStackMemory.Cyc <= "0";
+                ToStackMemory.Stb <= '0';
+                ToStackMemory.We <= '0';
+                StackAddress <= std_logic_vector(
+                    unsigned(StackAddress) + to_unsigned(1, StackAddress'LENGTH)
+                );
+                State <= StateEnd;
+            end if;
+        elsif (State = StateEnd) then
+            State <= StateIdle;
+        else
+            State <= StateError;
+        end if;
+    end;
+
     procedure PopFromStack32(signal State: inout std_logic_vector;
-                             signal FromStackMemory: in T_FromWishbone;
                              signal ToStackMemory: out T_ToWishbone;
+                             signal FromStackMemory: in T_FromWishbone;
                              signal StackAddress: inout std_logic_vector;
                              signal StackValue: out std_logic_vector;
                              signal StackType: out std_logic_vector) is
@@ -208,7 +295,7 @@ package body WasmFpgaStackPackage is
                 ToStackMemory.Cyc <= "0";
                 ToStackMemory.Stb <= '0';
                 ToStackMemory.We <= '0';
-                StackType <= FromStackMemory.DatOut;
+                StackType <= FromStackMemory.DatOut(2 downto 0);
                 State <= State2;
             end if;
         elsif(State = State2) then
@@ -224,6 +311,71 @@ package body WasmFpgaStackPackage is
                 ToStackMemory.Stb <= '0';
                 ToStackMemory.We <= '0';
                 StackValue <= FromStackMemory.DatOut;
+                State <= StateEnd;
+            end if;
+        elsif (State = StateEnd) then
+            State <= StateIdle;
+        else
+            State <= StateError;
+        end if;
+    end;
+
+    procedure PopFromStack64(signal State: inout std_logic_vector;
+                             signal ToStackMemory: out T_ToWishbone;
+                             signal FromStackMemory: in T_FromWishbone;
+                             signal StackAddress: inout std_logic_vector;
+                             signal StackLowValue: out std_logic_vector;
+                             signal StackHighValue: out std_logic_vector;
+                             signal StackType: out std_logic_vector) is
+    begin
+        if (State = StateIdle) then
+            State <= State0;
+        elsif (State = State0) then
+            -- Pop type from stack
+            ToStackMemory.Adr <= StackAddress;
+            ToStackMemory.Cyc <= "1";
+            ToStackMemory.Stb <= '1';
+            ToStackMemory.We <= '0';
+            StackAddress <= std_logic_vector(unsigned(StackAddress) - to_unsigned(1, StackAddress'LENGTH));
+            State <= State1;
+        elsif(State = State1) then
+            if (FromStackMemory.Ack = '1') then
+                ToStackMemory.Cyc <= "0";
+                ToStackMemory.Stb <= '0';
+                ToStackMemory.We <= '0';
+                StackType <= FromStackMemory.DatOut(2 downto 0);
+                State <= State2;
+            end if;
+        elsif(State = State2) then
+            -- Pop high value from stack
+            ToStackMemory.Adr <= StackAddress;
+            ToStackMemory.Cyc <= "1";
+            ToStackMemory.Stb <= '1';
+            ToStackMemory.We <= '0';
+            StackAddress <= std_logic_vector(unsigned(StackAddress) - to_unsigned(1, StackAddress'LENGTH));
+            State <= State3;
+        elsif (State = State3) then
+            if (FromStackMemory.Ack = '1') then
+                ToStackMemory.Cyc <= "0";
+                ToStackMemory.Stb <= '0';
+                ToStackMemory.We <= '0';
+                StackHighValue <= FromStackMemory.DatOut;
+                State <= State4;
+            end if;
+        elsif(State = State4) then
+            -- Pop low value from stack
+            ToStackMemory.Adr <= StackAddress;
+            ToStackMemory.Cyc <= "1";
+            ToStackMemory.Stb <= '1';
+            ToStackMemory.We <= '0';
+            StackAddress <= std_logic_vector(unsigned(StackAddress) - to_unsigned(1, StackAddress'LENGTH));
+            State <= State5;
+        elsif (State = State5) then
+            if (FromStackMemory.Ack = '1') then
+                ToStackMemory.Cyc <= "0";
+                ToStackMemory.Stb <= '0';
+                ToStackMemory.We <= '0';
+                StackLowValue <= FromStackMemory.DatOut;
                 State <= StateEnd;
             end if;
         elsif (State = StateEnd) then
