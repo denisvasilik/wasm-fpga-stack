@@ -295,7 +295,9 @@ package body WasmFpgaStackPackage is
                 ToStackMemory.Cyc <= "0";
                 ToStackMemory.Stb <= '0';
                 ToStackMemory.We <= '0';
-                StackAddress <= std_logic_vector(unsigned(StackAddress) + to_unsigned(1, StackAddress'LENGTH));
+                StackAddress <= std_logic_vector(
+                    unsigned(StackAddress) + to_unsigned(1, StackAddress'LENGTH)
+                );
                 State <= StateEnd;
             end if;
         elsif (State = StateEnd) then
@@ -390,7 +392,9 @@ package body WasmFpgaStackPackage is
             ToStackMemory.Cyc <= "1";
             ToStackMemory.Stb <= '1';
             ToStackMemory.We <= '0';
-            StackAddress <= std_logic_vector(unsigned(StackAddress) - to_unsigned(1, StackAddress'LENGTH));
+            StackAddress <= std_logic_vector(
+                unsigned(StackAddress) - to_unsigned(1, StackAddress'LENGTH)
+            );
             State <= State1;
         elsif(State = State1) then
             if (FromStackMemory.Ack = '1') then
@@ -405,7 +409,9 @@ package body WasmFpgaStackPackage is
             ToStackMemory.Cyc <= "1";
             ToStackMemory.Stb <= '1';
             ToStackMemory.We <= '0';
-            StackAddress <= std_logic_vector(unsigned(StackAddress) - to_unsigned(1, StackAddress'LENGTH));
+            StackAddress <= std_logic_vector(
+                unsigned(StackAddress) - to_unsigned(1, StackAddress'LENGTH)
+            );
             State <= State3;
         elsif (State = State3) then
             if (FromStackMemory.Ack = '1') then
@@ -438,7 +444,9 @@ package body WasmFpgaStackPackage is
             ToStackMemory.Cyc <= "1";
             ToStackMemory.Stb <= '1';
             ToStackMemory.We <= '0';
-            StackAddress <= std_logic_vector(unsigned(StackAddress) - to_unsigned(1, StackAddress'LENGTH));
+            StackAddress <= std_logic_vector(
+                unsigned(StackAddress) - to_unsigned(1, StackAddress'LENGTH)
+            );
             State <= State1;
         elsif(State = State1) then
             if (FromStackMemory.Ack = '1') then
@@ -454,7 +462,9 @@ package body WasmFpgaStackPackage is
             ToStackMemory.Cyc <= "1";
             ToStackMemory.Stb <= '1';
             ToStackMemory.We <= '0';
-            StackAddress <= std_logic_vector(unsigned(StackAddress) - to_unsigned(1, StackAddress'LENGTH));
+            StackAddress <= std_logic_vector(
+                unsigned(StackAddress) - to_unsigned(1, StackAddress'LENGTH)
+            );
             State <= State3;
         elsif (State = State3) then
             if (FromStackMemory.Ack = '1') then
@@ -470,7 +480,9 @@ package body WasmFpgaStackPackage is
             ToStackMemory.Cyc <= "1";
             ToStackMemory.Stb <= '1';
             ToStackMemory.We <= '0';
-            StackAddress <= std_logic_vector(unsigned(StackAddress) - to_unsigned(1, StackAddress'LENGTH));
+            StackAddress <= std_logic_vector(
+                unsigned(StackAddress) - to_unsigned(1, StackAddress'LENGTH)
+            );
             State <= State5;
         elsif (State = State5) then
             if (FromStackMemory.Ack = '1') then
