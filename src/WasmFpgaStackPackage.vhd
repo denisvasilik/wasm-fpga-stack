@@ -21,6 +21,9 @@ package WasmFpgaStackPackage is
     constant StateEnd : std_logic_vector(15 downto 0) := x"00FE";
     constant StateError : std_logic_vector(15 downto 0) := x"00FF";
 
+    constant ActivationFrameSize : std_logic_vector(23 downto 0) := x"000004";
+    constant TypeValueOffset : std_logic_vector(23 downto 0) := x"000002";
+
     type T_FromWishbone is
     record
         DatOut : std_logic_vector(31 downto 0);
@@ -46,6 +49,17 @@ package WasmFpgaStackPackage is
                                     signal MaxLocals : in std_logic_vector;
                                     signal MaxResults : in std_logic_vector;
                                     signal ReturnAddress : in std_logic_vector);
+
+    procedure LocalGet(signal State: inout std_logic_vector;
+                       signal PushToStackState : inout std_logic_vector;
+                       signal ToStackMemory : out T_ToWishbone;
+                       signal FromStackMemory : in T_FromWishbone;
+                       signal CurrentActivationFrameAddress : in std_logic_vector;
+                       signal StackAddress : inout std_logic_vector;
+                       signal LocalIndex : in std_logic_vector;
+                       signal HighValue : inout std_logic_vector(31 downto 0);
+                       signal LowValue : inout std_logic_vector(31 downto 0);
+                       signal TypeValue : inout std_logic_vector(2 downto 0));
 
     procedure PushToStack32(signal State : inout std_logic_vector;
                             signal ToStackMemory : out T_ToWishbone;
@@ -145,6 +159,94 @@ package body WasmFpgaStackPackage is
                           StackAddress,
                           ReturnAddress,
                           WASMFPGASTACK_VAL_Activation);
+            if (PushToStackState = StateEnd) then
+                State <= StateEnd;
+            end if;
+        elsif (State = StateEnd) then
+            State <= StateIdle;
+        else
+            State <= StateError;
+        end if;
+    end;
+
+    procedure LocalGet(signal State: inout std_logic_vector;
+                       signal PushToStackState : inout std_logic_vector;
+                       signal ToStackMemory : out T_ToWishbone;
+                       signal FromStackMemory : in T_FromWishbone;
+                       signal CurrentActivationFrameAddress : in std_logic_vector;
+                       signal StackAddress : inout std_logic_vector;
+                       signal LocalIndex : in std_logic_vector;
+                       signal HighValue : inout std_logic_vector(31 downto 0);
+                       signal LowValue : inout std_logic_vector(31 downto 0);
+                       signal TypeValue : inout std_logic_vector(2 downto 0))
+    is
+        variable TempStackAddress : std_logic_vector(StackAddress'RANGE);
+    begin
+        if (State = StateIdle) then
+            State <= State0;
+        elsif (State = State0) then
+            -- Local Get TypeValue
+            ToStackMemory.Cyc <= "1";
+            ToStackMemory.Stb <= '1';
+            ToStackMemory.We <= '0';
+            TempStackAddress := std_logic_vector(
+                unsigned(CurrentActivationFrameAddress) +
+                unsigned(ActivationFrameSize) +
+               (unsigned(LocalIndex(21 downto 0)) & "00") +
+                unsigned(TypeValueOffset)
+            );
+            ToStackMemory.Adr <= TempStackAddress;
+            State <= State1;
+        elsif(State = State1) then
+            if (FromStackMemory.Ack = '1') then
+                ToStackMemory.Cyc <= "0";
+                ToStackMemory.Stb <= '0';
+                ToStackMemory.We <= '0';
+                TypeValue <= FromStackMemory.DatOut(2 downto 0);
+                State <= State2;
+            end if;
+        elsif(State = State2) then
+            -- Local Get HighValue
+            ToStackMemory.Cyc <= "1";
+            ToStackMemory.Stb <= '1';
+            ToStackMemory.We <= '0';
+            ToStackMemory.Adr <= std_logic_vector(
+                unsigned(TempStackAddress) - to_unsigned(1, TempStackAddress'LENGTH)
+            );
+            State <= State3;
+        elsif(State = State3) then
+            if (FromStackMemory.Ack = '1' ) then
+                ToStackMemory.Cyc <= "0";
+                ToStackMemory.Stb <= '0';
+                ToStackMemory.We <= '0';
+                HighValue <= FromStackMemory.DatOut;
+                State <= State4;
+            end if;
+        elsif(State = State4) then
+            -- Local Get LowValue
+            ToStackMemory.Cyc <= "1";
+            ToStackMemory.Stb <= '1';
+            ToStackMemory.We <= '0';
+            ToStackMemory.Adr <= std_logic_vector(
+                unsigned(TempStackAddress) - to_unsigned(2, TempStackAddress'LENGTH)
+            );
+            State <= State5;
+        elsif(State = State5) then
+            if (FromStackMemory.Ack = '1') then
+                ToStackMemory.Cyc <= "0";
+                ToStackMemory.Stb <= '0';
+                ToStackMemory.We <= '0';
+                LowValue <= FromStackMemory.DatOut;
+                State <= State6;
+            end if;
+        elsif(State = State6) then
+            PushToStack64(PushToStackState,
+                          ToStackMemory,
+                          FromStackMemory,
+                          StackAddress,
+                          LowValue,
+                          HighValue,
+                          TypeValue);
             if (PushToStackState = StateEnd) then
                 State <= StateEnd;
             end if;

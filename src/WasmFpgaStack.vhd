@@ -68,9 +68,6 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
 
   constant WASMFPGASTORE_ADR_BLK_MASK_StackBlk : std_logic_vector(23 downto 0) := x"00003F";
 
-  constant ActivationFrameSize : std_logic_vector(23 downto 0) := x"000004";
-  constant TypeValueOffset : std_logic_vector(23 downto 0) := x"000002";
-
   signal ActivationFrameState : std_logic_vector(15 downto 0);
   signal PushToStackState : std_logic_vector(15 downto 0);
   signal PopFromStackState : std_logic_vector(15 downto 0);
