@@ -18,11 +18,11 @@ package WasmFpgaStackPackage is
     constant State7 : std_logic_vector(15 downto 0) := x"0008";
     constant State8 : std_logic_vector(15 downto 0) := x"0009";
     constant State9 : std_logic_vector(15 downto 0) := x"000A";
+    constant State10 : std_logic_vector(15 downto 0) := x"000B";
+    constant State11 : std_logic_vector(15 downto 0) := x"000C";
+    constant State12 : std_logic_vector(15 downto 0) := x"000D";
     constant StateEnd : std_logic_vector(15 downto 0) := x"00FE";
     constant StateError : std_logic_vector(15 downto 0) := x"00FF";
-
-    constant ActivationFrameSize : std_logic_vector(23 downto 0) := x"000004";
-    constant TypeValueOffset : std_logic_vector(23 downto 0) := x"000002";
 
     type T_FromWishbone is
     record
@@ -54,12 +54,16 @@ package WasmFpgaStackPackage is
                        signal PushToStackState : inout std_logic_vector;
                        signal ToStackMemory : out T_ToWishbone;
                        signal FromStackMemory : in T_FromWishbone;
-                       signal CurrentActivationFrameAddress : in std_logic_vector;
+                       signal ActivationFrameAddress : in std_logic_vector;
                        signal StackAddress : inout std_logic_vector;
                        signal LocalIndex : in std_logic_vector;
                        signal HighValue : inout std_logic_vector(31 downto 0);
                        signal LowValue : inout std_logic_vector(31 downto 0);
-                       signal TypeValue : inout std_logic_vector(2 downto 0));
+                       signal TypeValue : inout std_logic_vector(2 downto 0);
+                       signal MaxLocals : inout std_logic_vector;
+                       signal ActivationFramePtr : inout std_logic_vector;
+                       signal LocalIndexPtr : inout std_logic_vector;
+                       signal CurrentLocalIndex : inout std_logic_vector);
 
     procedure PushToStack32(signal State : inout std_logic_vector;
                             signal ToStackMemory : out T_ToWishbone;
@@ -173,73 +177,125 @@ package body WasmFpgaStackPackage is
                        signal PushToStackState : inout std_logic_vector;
                        signal ToStackMemory : out T_ToWishbone;
                        signal FromStackMemory : in T_FromWishbone;
-                       signal CurrentActivationFrameAddress : in std_logic_vector;
+                       signal ActivationFrameAddress : in std_logic_vector;
                        signal StackAddress : inout std_logic_vector;
                        signal LocalIndex : in std_logic_vector;
                        signal HighValue : inout std_logic_vector(31 downto 0);
                        signal LowValue : inout std_logic_vector(31 downto 0);
-                       signal TypeValue : inout std_logic_vector(2 downto 0))
-    is
-        variable TempStackAddress : std_logic_vector(StackAddress'RANGE);
+                       signal TypeValue : inout std_logic_vector(2 downto 0);
+                       signal MaxLocals : inout std_logic_vector;
+                       signal ActivationFramePtr : inout std_logic_vector;
+                       signal LocalIndexPtr : inout std_logic_vector;
+                       signal CurrentLocalIndex : inout std_logic_vector) is
     begin
         if (State = StateIdle) then
+            MaxLocals <= (others => '0');
+            LocalIndexPtr <= (others => '0');
+            CurrentLocalIndex <= (others => '0');
+            ActivationFramePtr <= std_logic_vector(
+                unsigned(ActivationFrameAddress) +
+                to_unsigned(1, ActivationFramePtr'LENGTH)
+            );
             State <= State0;
         elsif (State = State0) then
-            -- Local Get TypeValue
+            -- Get Max Locals from Activation Frame
             ToStackMemory.Cyc <= "1";
             ToStackMemory.Stb <= '1';
             ToStackMemory.We <= '0';
-            TempStackAddress := std_logic_vector(
-                unsigned(CurrentActivationFrameAddress) +
-                unsigned(ActivationFrameSize) +
-               (unsigned(LocalIndex(21 downto 0)) & "00") +
-                unsigned(TypeValueOffset)
-            );
-            ToStackMemory.Adr <= TempStackAddress;
+            ToStackMemory.Adr <= ActivationFramePtr;
             State <= State1;
         elsif(State = State1) then
             if (FromStackMemory.Ack = '1') then
                 ToStackMemory.Cyc <= "0";
                 ToStackMemory.Stb <= '0';
                 ToStackMemory.We <= '0';
-                TypeValue <= FromStackMemory.DatOut(2 downto 0);
+                MaxLocals <= FromStackMemory.DatOut;
+                CurrentLocalIndex <= FromStackMemory.DatOut;
+                ActivationFramePtr <= ActivationFrameAddress;
                 State <= State2;
             end if;
         elsif(State = State2) then
-            -- Local Get HighValue
-            ToStackMemory.Cyc <= "1";
-            ToStackMemory.Stb <= '1';
-            ToStackMemory.We <= '0';
-            ToStackMemory.Adr <= std_logic_vector(
-                unsigned(TempStackAddress) - to_unsigned(1, TempStackAddress'LENGTH)
-            );
-            State <= State3;
-        elsif(State = State3) then
-            if (FromStackMemory.Ack = '1' ) then
-                ToStackMemory.Cyc <= "0";
-                ToStackMemory.Stb <= '0';
-                ToStackMemory.We <= '0';
-                HighValue <= FromStackMemory.DatOut;
-                State <= State4;
+            if (CurrentLocalIndex = std_logic_vector(unsigned(MaxLocals) - unsigned(LocalIndex) - 1))then
+                State <= State6;
+            else
+                CurrentLocalIndex <= std_logic_vector(unsigned(CurrentLocalIndex) - 1);
+                ActivationFramePtr <= std_logic_vector(unsigned(ActivationFramePtr) - 1);
+                State <= State3;
             end if;
-        elsif(State = State4) then
-            -- Local Get LowValue
+        elsif(State = State3) then
+            -- Get Type Value
             ToStackMemory.Cyc <= "1";
             ToStackMemory.Stb <= '1';
             ToStackMemory.We <= '0';
-            ToStackMemory.Adr <= std_logic_vector(
-                unsigned(TempStackAddress) - to_unsigned(2, TempStackAddress'LENGTH)
-            );
-            State <= State5;
-        elsif(State = State5) then
+            ToStackMemory.Adr <= ActivationFramePtr;
+            State <= State4;
+        elsif(State = State4) then
             if (FromStackMemory.Ack = '1') then
                 ToStackMemory.Cyc <= "0";
                 ToStackMemory.Stb <= '0';
                 ToStackMemory.We <= '0';
-                LowValue <= FromStackMemory.DatOut;
-                State <= State6;
+                TypeValue <= FromStackMemory.DatOut(2 downto 0);
+                State <= State5;
             end if;
+        elsif(State = State5) then
+            if (TypeValue = WASMFPGASTACK_VAL_i32 or
+                TypeValue = WASMFPGASTACK_VAL_f32) then
+                ActivationFramePtr <= std_logic_vector(unsigned(ActivationFramePtr) - 1);
+            else
+                ActivationFramePtr <= std_logic_vector(unsigned(ActivationFramePtr) - 2);
+            end if;
+            State <= State2;
         elsif(State = State6) then
+            -- Local Get HighValue
+            ToStackMemory.Cyc <= "1";
+            ToStackMemory.Stb <= '1';
+            ToStackMemory.We <= '0';
+            ToStackMemory.Adr <= ActivationFramePtr;
+            State <= State7;
+        elsif(State = State7) then
+            if (FromStackMemory.Ack = '1' ) then
+                ToStackMemory.Cyc <= "0";
+                ToStackMemory.Stb <= '0';
+                ToStackMemory.We <= '0';
+                LowValue <= FromStackMemory.DatOut;
+                State <= State8;
+            end if;
+        elsif(State = State8) then
+            -- Local Get LowValue
+            ToStackMemory.Cyc <= "1";
+            ToStackMemory.Stb <= '1';
+            ToStackMemory.We <= '0';
+            ToStackMemory.Adr <= std_logic_vector(unsigned(ActivationFramePtr) + 1);
+            State <= State9;
+        elsif(State = State9) then
+            if (FromStackMemory.Ack = '1') then
+                ToStackMemory.Cyc <= "0";
+                ToStackMemory.Stb <= '0';
+                ToStackMemory.We <= '0';
+                if (TypeValue = WASMFPGASTACK_VAL_i32 or
+                    TypeValue = WASMFPGASTACK_VAL_f32) then
+                    TypeValue <= FromStackMemory.DatOut(2 downto 0);
+                    State <= State12;
+                else
+                    HighValue <= FromStackMemory.DatOut;
+                    State <= State10;
+                end if;
+            end if;
+        elsif(State = State10) then
+            ToStackMemory.Cyc <= "1";
+            ToStackMemory.Stb <= '1';
+            ToStackMemory.We <= '0';
+            ToStackMemory.Adr <= std_logic_vector(unsigned(ActivationFramePtr) + 1);
+            State <= State11;
+        elsif(State = State11) then
+            if (FromStackMemory.Ack = '1') then
+                ToStackMemory.Cyc <= "0";
+                ToStackMemory.Stb <= '0';
+                ToStackMemory.We <= '0';
+                TypeValue <= FromStackMemory.DatOut(2 downto 0);
+                State <= State12;
+            end if;
+        elsif(State = State12) then
             PushToStack64(PushToStackState,
                           ToStackMemory,
                           FromStackMemory,

@@ -73,11 +73,11 @@ HwSwIf WasmFpgaStack {
         FileEndVhdlTestBench {
             "";
         }
-        BlockAddressSegmentSizes = [ 0x30 ];
+        BlockAddressSegmentSizes = [ 0x40 ];
     }
 
 
-    Block StackBlk ( Base = 0x0 , Size = 0x30 ) {
+    Block StackBlk ( Base = 0x0 , Size = 0x40 ) {
         BlockName {
             "WebAssembly Stack Block"; }
         BlockDescription { "This block describes the WebAssembly stack block."; }
@@ -373,6 +373,29 @@ HwSwIf WasmFpgaStack {
             }
             Bits {
                 BitFieldData ModuleInstanceUid ( 31 downto 0 ) 'RW_WReg_RLoopBack' {
+                    BitFieldDescription { ""; }
+                    ResetValueEntry = 0b0;
+                    BlockResetsAffecting {
+                        Pwr = 'X' ;
+                    }
+                }
+            }
+        }
+
+        FieldDiscretePositions ActivationFrameAddressReg ( Width = 32, Idx->Addr 0 -> 0x30 ) {
+            FieldName { "Activation Frame Register"; }
+            FieldDescription {
+                "This register can be used to set or get the current activation frame address.";
+                "It is mainly used for testing purposes and may cause undefined behaviour.";
+           	}
+            TransferPointOfTime = '-';
+            HwConfiguration {
+                HwTypeSync = 'Yes';
+                HwAckImmediate = 'Yes';
+                HwAddWRegPulse = 'Yes';
+            }
+            Bits {
+                BitFieldData ActivationFrameAddress ( 31 downto 0 ) 'RorW_WReg_RTrans' {
                     BitFieldDescription { ""; }
                     ResetValueEntry = 0b0;
                     BlockResetsAffecting {

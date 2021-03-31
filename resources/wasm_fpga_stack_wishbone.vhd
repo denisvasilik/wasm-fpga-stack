@@ -44,7 +44,10 @@ entity StackBlk_WasmFpgaStack is
         MaxLocals : out std_logic_vector(31 downto 0);
         MaxResults : out std_logic_vector(31 downto 0);
         ReturnAddress : out std_logic_vector(31 downto 0);
-        ModuleInstanceUid : out std_logic_vector(31 downto 0)
+        ModuleInstanceUid : out std_logic_vector(31 downto 0);
+        ActivationFrameAddress_ToBeRead : in std_logic_vector(31 downto 0);
+        ActivationFrameAddress_Written : out std_logic_vector(31 downto 0);
+        WRegPulse_ActivationFrameAddressReg : out std_logic
      );
 end StackBlk_WasmFpgaStack;
 
@@ -82,6 +85,8 @@ architecture arch_for_synthesys of StackBlk_WasmFpgaStack is
     signal PreMuxAck_ReturnAddressReg : std_logic;
     signal PreMuxDatOut_ModuleInstanceUidReg : std_logic_vector(31 downto 0);
     signal PreMuxAck_ModuleInstanceUidReg : std_logic;
+    signal PreMuxDatOut_ActivationFrameAddressReg : std_logic_vector(31 downto 0);
+    signal PreMuxAck_ActivationFrameAddressReg : std_logic;
 
     signal WriteDiff_ControlReg : std_logic;
     signal ReadDiff_ControlReg : std_logic;
@@ -133,6 +138,11 @@ architecture arch_for_synthesys of StackBlk_WasmFpgaStack is
     signal ReadDiff_ModuleInstanceUidReg : std_logic;
 
 
+    signal WriteDiff_ActivationFrameAddressReg : std_logic;
+    signal ReadDiff_ActivationFrameAddressReg : std_logic;
+     signal DelWriteDiff_ActivationFrameAddressReg: std_logic;
+
+
     signal WReg_Run : std_logic;
     signal WReg_Action : std_logic_vector(2 downto 0);
     signal WReg_HighValue_Written : std_logic_vector(31 downto 0);
@@ -144,6 +154,7 @@ architecture arch_for_synthesys of StackBlk_WasmFpgaStack is
     signal WReg_MaxResults : std_logic_vector(31 downto 0);
     signal WReg_ReturnAddress : std_logic_vector(31 downto 0);
     signal WReg_ModuleInstanceUid : std_logic_vector(31 downto 0);
+    signal WReg_ActivationFrameAddress_Written : std_logic_vector(31 downto 0);
 
 begin 
 
@@ -190,6 +201,8 @@ begin
                                 PreMuxAck_ReturnAddressReg,
                                 PreMuxDatOut_ModuleInstanceUidReg,
                                 PreMuxAck_ModuleInstanceUidReg,
+                                PreMuxDatOut_ActivationFrameAddressReg,
+                                PreMuxAck_ActivationFrameAddressReg,
                                 PreMuxAck_Unoccupied
                                 )
     begin 
@@ -236,6 +249,9 @@ begin
             elsif ( (unsigned(Adr)/4)*4  = ( unsigned(WASMFPGASTACK_ADR_ModuleInstanceUidReg)) ) then
                  StackBlk_PreDatOut <= PreMuxDatOut_ModuleInstanceUidReg;
                 StackBlk_PreAck <= PreMuxAck_ModuleInstanceUidReg;
+            elsif ( (unsigned(Adr)/4)*4  = ( unsigned(WASMFPGASTACK_ADR_ActivationFrameAddressReg)) ) then
+                 StackBlk_PreDatOut <= PreMuxDatOut_ActivationFrameAddressReg;
+                StackBlk_PreAck <= PreMuxAck_ActivationFrameAddressReg;
             else 
                 StackBlk_PreAck <= PreMuxAck_Unoccupied;
                 StackBlk_Unoccupied_PreAck <= PreMuxAck_Unoccupied;
@@ -798,6 +814,56 @@ begin
 
     ModuleInstanceUid <= WReg_ModuleInstanceUid;
 
+    -- .......... ActivationFrameAddressReg, Width: 32, Type: Synchronous  .......... 
+
+    ack_imdt_part_ActivationFrameAddressReg0 : process (Adr, We, Stb, Cyc, PreMuxAck_ActivationFrameAddressReg)
+    begin 
+        if ( (unsigned(Adr)/4)*4 = unsigned(WASMFPGASTACK_ADR_ActivationFrameAddressReg) ) then 
+            WriteDiff_ActivationFrameAddressReg <=  We and Stb and Cyc(0) and not PreMuxAck_ActivationFrameAddressReg;
+        else
+            WriteDiff_ActivationFrameAddressReg <= '0';
+        end if;
+
+        if ( (unsigned(Adr)/4)*4 = unsigned(WASMFPGASTACK_ADR_ActivationFrameAddressReg) ) then 
+            ReadDiff_ActivationFrameAddressReg <= not We and Stb and Cyc(0) and not PreMuxAck_ActivationFrameAddressReg;
+        else
+            ReadDiff_ActivationFrameAddressReg <= '0';
+        end if;
+    end process;
+
+    reg_syn_clk_part_ActivationFrameAddressReg0 : process (Clk, Rst)
+    begin 
+        if (Rst = '1') then 
+             DelWriteDiff_ActivationFrameAddressReg <= '0'; 
+            PreMuxAck_ActivationFrameAddressReg <= '0';
+            WReg_ActivationFrameAddress_Written <= "00000000000000000000000000000000";
+        elsif rising_edge(Clk) then
+             DelWriteDiff_ActivationFrameAddressReg <= WriteDiff_ActivationFrameAddressReg;
+            PreMuxAck_ActivationFrameAddressReg <= WriteDiff_ActivationFrameAddressReg or ReadDiff_ActivationFrameAddressReg; 
+            if (WriteDiff_ActivationFrameAddressReg = '1') then
+                if (Sel(3) = '1') then WReg_ActivationFrameAddress_Written(31 downto 24) <= DatIn(31 downto 24); end if;
+                if (Sel(2) = '1') then WReg_ActivationFrameAddress_Written(23 downto 16) <= DatIn(23 downto 16); end if;
+                if (Sel(1) = '1') then WReg_ActivationFrameAddress_Written(15 downto 8) <= DatIn(15 downto 8); end if;
+                if (Sel(0) = '1') then WReg_ActivationFrameAddress_Written(7 downto 0) <= DatIn(7 downto 0); end if;
+            else
+            end if;
+        end if;
+    end process;
+
+    mux_premuxdatout_ActivationFrameAddressReg0 : process (
+            ActivationFrameAddress_ToBeRead
+            )
+    begin 
+         PreMuxDatOut_ActivationFrameAddressReg <= x"0000_0000";
+         PreMuxDatOut_ActivationFrameAddressReg(31 downto 0) <= ActivationFrameAddress_ToBeRead;
+    end process;
+
+
+
+    WRegPulse_ActivationFrameAddressReg <= DelWriteDiff_ActivationFrameAddressReg;
+
+    ActivationFrameAddress_Written <= WReg_ActivationFrameAddress_Written;
+
 
 end architecture;
 
@@ -860,7 +926,10 @@ architecture arch_for_synthesys of WasmFpgaStackWshBn is
             MaxLocals : out std_logic_vector(31 downto 0);
             MaxResults : out std_logic_vector(31 downto 0);
             ReturnAddress : out std_logic_vector(31 downto 0);
-            ModuleInstanceUid : out std_logic_vector(31 downto 0)
+            ModuleInstanceUid : out std_logic_vector(31 downto 0);
+            ActivationFrameAddress_ToBeRead : in std_logic_vector(31 downto 0);
+            ActivationFrameAddress_Written : out std_logic_vector(31 downto 0);
+            WRegPulse_ActivationFrameAddressReg : out std_logic
          );
     end component; 
 
@@ -909,7 +978,10 @@ begin
         MaxLocals => WasmFpgaStackWshBn_StackBlk.MaxLocals,
         MaxResults => WasmFpgaStackWshBn_StackBlk.MaxResults,
         ReturnAddress => WasmFpgaStackWshBn_StackBlk.ReturnAddress,
-        ModuleInstanceUid => WasmFpgaStackWshBn_StackBlk.ModuleInstanceUid
+        ModuleInstanceUid => WasmFpgaStackWshBn_StackBlk.ModuleInstanceUid,
+        ActivationFrameAddress_ToBeRead => StackBlk_WasmFpgaStackWshBn.ActivationFrameAddress_ToBeRead,
+        ActivationFrameAddress_Written => WasmFpgaStackWshBn_StackBlk.ActivationFrameAddress_Written,
+        WRegPulse_ActivationFrameAddressReg => WasmFpgaStackWshBn_StackBlk.WRegPulse_ActivationFrameAddressReg
      );
 
 

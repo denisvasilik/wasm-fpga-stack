@@ -46,8 +46,12 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   signal Type_Written : std_logic_vector(2 downto 0);
   signal LocalIndex : std_logic_vector(31 downto 0);
   signal ModuleInstanceUid : std_logic_vector(31 downto 0);
+  signal HighValue : std_logic_vector(31 downto 0);
+  signal LowValue : std_logic_vector(31 downto 0);
+  signal TypeValue : std_logic_vector(2 downto 0);
 
   signal MaskedAdr : std_logic_vector(23 downto 0);
+
 
   signal StackBlk_Ack : std_logic;
   signal StackBlk_DatOut : std_logic_vector(31 downto 0);
@@ -60,8 +64,7 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   signal StackAddress_ToBeRead : std_logic_vector(31 downto 0);
   signal StackAddress_Written : std_logic_vector(31 downto 0);
   signal WRegPulse_StackAddressReg : std_logic;
-  signal RestoreStackAddress : std_logic_vector(23 downto 0);
-  signal CurrentActivationFrameAddress : std_logic_vector(23 downto 0);
+  signal ActivationFrameAddress : std_logic_vector(23 downto 0);
   signal MaxLocals : std_logic_vector(31 downto 0);
   signal MaxResults : std_logic_vector(31 downto 0);
   signal ReturnAddress : std_logic_vector(31 downto 0);
@@ -71,9 +74,20 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   signal ActivationFrameState : std_logic_vector(15 downto 0);
   signal PushToStackState : std_logic_vector(15 downto 0);
   signal PopFromStackState : std_logic_vector(15 downto 0);
+  signal LocalGetState : std_logic_vector(15 downto 0);
 
   signal ToStackMemory : T_ToWishbone;
   signal FromStackMemory : T_FromWishbone;
+
+  -- LocalGet internal state
+  signal LocalGet_MaxLocals : std_logic_vector(31 downto 0);
+  signal LocalGet_ActivationFramePtr : std_logic_vector(23 downto 0);
+  signal LocalGet_LocalIndexPtr : std_logic_vector(23 downto 0);
+  signal LocalGet_CurrentLocalIndex : std_logic_vector(31 downto 0);
+
+  signal ActivationFrameAddress_ToBeRead : std_logic_vector(31 downto 0);
+  signal ActivationFrameAddress_Written : std_logic_vector(31 downto 0);
+  signal WRegPulse_ActivationFrameAddressReg : std_logic;
 
 begin
 
@@ -86,7 +100,9 @@ begin
 
   StackAddress_ToBeRead <= x"00" & StackAddress;
 
-  Stack_Adr <= StackAddress;
+  ActivationFrameAddress_ToBeRead <= x"00" & ActivationFrameAddress;
+
+  Stack_Adr <= ToStackMemory.Adr;
   Stack_Sel <= ToStackMemory.Sel;
   Stack_DatOut <= ToStackMemory.DatIn;
   Stack_We <= ToStackMemory.We;
@@ -97,7 +113,7 @@ begin
   FromStackMemory.Ack <= Stack_Ack;
 
   Stack : process (Clk, Rst) is
-    constant StackStateIdle0 : std_logic_vector(7 downto 0) := x"00";
+    constant StackStateIdle : std_logic_vector(7 downto 0) := x"00";
     constant StackStatePush32Bit0 : std_logic_vector(7 downto 0) := x"01";
     constant StackStatePush32Bit1 : std_logic_vector(7 downto 0) := x"02";
     constant StackStatePop32Bit0 : std_logic_vector(7 downto 0) := x"03";
@@ -158,26 +174,36 @@ begin
           Stb => '0',
           Cyc => (others => '0')
       );
-      RestoreStackAddress <= (others => '0');
+      LocalGet_ActivationFramePtr <= (others => '0');
+      LocalGet_MaxLocals <= (others => '0');
+      LocalGet_LocalIndexPtr <= (others => '0');
+      LocalGet_CurrentLocalIndex <= (others => '0');
+      LowValue <= (others => '0');
+      HighValue <= (others => '0');
+      TypeValue <= (others => '0');
       StackAddress <= (others => '0');
       LowValue_ToBeRead <= (others => '0');
       HighValue_ToBeRead <= (others => '0');
       Type_ToBeRead <= (others => '0');
       SizeValue <= (others => '0');
-      CurrentActivationFrameAddress <= (others => '0');
+      ActivationFrameAddress <= (others => '0');
       ActivationFrameState <= StateIdle;
+      LocalGetState <= StateIdle;
       PushToStackState <= StateIdle;
       PopFromStackState <= StateIdle;
-      StackState <= StackStateIdle0;
-      ReturnStackState <= StackStateIdle0;
+      StackState <= StackStateIdle;
+      ReturnStackState <= StackStateIdle;
     elsif rising_edge(Clk) then
-      if(StackState = StackStateIdle0) then
+      if(StackState = StackStateIdle) then
         Busy <= '0';
         ToStackMemory.Cyc <= (others => '0');
         ToStackMemory.Stb <= '0';
         ToStackMemory.We <= '0';
         if (WRegPulse_StackAddressReg = '1') then
             StackAddress <= StackAddress_Written(23 downto 0);
+        end if;
+        if (WRegPulse_ActivationFrameAddressReg = '1') then
+            ActivationFrameAddress <= ActivationFrameAddress_Written(23 downto 0);
         end if;
         if (WRegPulse_ControlReg = '1' and Run = '1') then
             Busy <= '1';
@@ -239,17 +265,45 @@ begin
             SizeValue <= std_logic_vector(
                 unsigned(SizeValue) + to_unsigned(1, SizeValue'LENGTH)
             );
-            StackState <= StackStateIdle0;
+            StackState <= StackStateIdle;
         end if;
       --
       -- Remove Activation Frame
       --
-      -- TODO: Set CurrentActivationFrameAddress
+      -- TODO: Set ActivationFrameAddress
       --
       -- if (Type_Written = WASMFPGASTACK_VAL_Activation) then
-      --    CurrentActivationFrameAddress <= StackAddress;
+      --    ActivationFrameAddress <= StackAddress;
       -- end if;
 
+      --
+      -- Local Get
+      --
+      elsif(StackState = StackStateLocalGet0) then
+        -- Local Get TypeValue
+        LocalGet(LocalGetState,
+                 PushToStackState,
+                 ToStackMemory,
+                 FromStackMemory,
+                 ActivationFrameAddress,
+                 StackAddress,
+                 LocalIndex,
+                 HighValue,
+                 LowValue,
+                 TypeValue,
+                 LocalGet_MaxLocals,
+                 LocalGet_ActivationFramePtr,
+                 LocalGet_LocalIndexPtr,
+                 LocalGet_CurrentLocalIndex);
+        if (LocalGetState = StateEnd) then
+            SizeValue <= std_logic_vector(
+                unsigned(SizeValue) + to_unsigned(1, SizeValue'LENGTH)
+            );
+            LowValue_ToBeRead <= LowValue;
+            HighValue_ToBeRead <= HighValue;
+            Type_ToBeRead <= TypeValue;
+            StackState <= StackStateIdle;
+        end if;
       --
       -- Push 64 Bit
       --
@@ -265,7 +319,7 @@ begin
             SizeValue <= std_logic_vector(
                 unsigned(SizeValue) + to_unsigned(1, SizeValue'LENGTH)
             );
-            StackState <= StackStateIdle0;
+            StackState <= StackStateIdle;
         end if;
       --
       -- Pop 64 Bit
@@ -282,7 +336,7 @@ begin
             SizeValue <= std_logic_vector(
                 unsigned(SizeValue) - to_unsigned(1, SizeValue'LENGTH)
             );
-            StackState <= StackStateIdle0;
+            StackState <= StackStateIdle;
         end if;
       --
       -- Push 32 Bit
@@ -298,7 +352,7 @@ begin
             SizeValue <= std_logic_vector(
                 unsigned(SizeValue) + to_unsigned(1, SizeValue'LENGTH)
             );
-            StackState <= StackStateIdle0;
+            StackState <= StackStateIdle;
         end if;
       --
       -- Pop 32 Bit
@@ -315,7 +369,7 @@ begin
             SizeValue <= std_logic_vector(
                 unsigned(SizeValue) - to_unsigned(1, SizeValue'LENGTH)
             );
-            StackState <= StackStateIdle0;
+            StackState <= StackStateIdle;
         end if;
       elsif(StackState = StackStateError) then
         Trap <= '1';
@@ -354,7 +408,10 @@ begin
       MaxLocals => MaxLocals,
       MaxResults => MaxResults,
       ReturnAddress => ReturnAddress,
-      ModuleInstanceUid => ModuleInstanceUid
+      ModuleInstanceUid => ModuleInstanceUid,
+      ActivationFrameAddress_ToBeRead => ActivationFrameAddress_ToBeRead,
+      ActivationFrameAddress_Written => ActivationFrameAddress_Written,
+      WRegPulse_ActivationFrameAddressReg => WRegPulse_ActivationFrameAddressReg
     );
 
 end;
