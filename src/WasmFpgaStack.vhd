@@ -37,7 +37,7 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   signal WRegPulse_ControlReg : std_logic;
   signal Action : std_logic_vector(2 downto 0);
   signal Busy : std_logic;
-  signal SizeValue : std_logic_vector(31 downto 0);
+  signal StackSize : unsigned(31 downto 0);
   signal HighValue_ToBeRead : std_logic_vector(31 downto 0);
   signal HighValue_Written : std_logic_vector(31 downto 0);
   signal LowValue_ToBeRead : std_logic_vector(31 downto 0);
@@ -51,7 +51,6 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   signal TypeValue : std_logic_vector(2 downto 0);
 
   signal MaskedAdr : std_logic_vector(23 downto 0);
-
 
   signal StackBlk_Ack : std_logic;
   signal StackBlk_DatOut : std_logic_vector(31 downto 0);
@@ -185,7 +184,7 @@ begin
       LowValue_ToBeRead <= (others => '0');
       HighValue_ToBeRead <= (others => '0');
       Type_ToBeRead <= (others => '0');
-      SizeValue <= (others => '0');
+      StackSize <= (others => '0');
       ActivationFrameAddress <= (others => '0');
       ActivationFrameState <= StateIdle;
       LocalGetState <= StateIdle;
@@ -251,7 +250,6 @@ begin
       --  return address (type: activation frame)
       --
       elsif(StackState = StackStateActivationFrame0) then
-        -- Push ModuleInstanceID
         CreateActivationFrame(ActivationFrameState,
                               PushToStackState,
                               ToStackMemory,
@@ -262,9 +260,7 @@ begin
                               MaxResults,
                               ReturnAddress);
         if (ActivationFrameState = StateEnd) then
-            SizeValue <= std_logic_vector(
-                unsigned(SizeValue) + to_unsigned(1, SizeValue'LENGTH)
-            );
+            StackSize <= StackSize + 1;
             StackState <= StackStateIdle;
         end if;
       --
@@ -296,9 +292,7 @@ begin
                  LocalGet_LocalIndexPtr,
                  LocalGet_CurrentLocalIndex);
         if (LocalGetState = StateEnd) then
-            SizeValue <= std_logic_vector(
-                unsigned(SizeValue) + to_unsigned(1, SizeValue'LENGTH)
-            );
+            StackSize <= StackSize + 1;
             LowValue_ToBeRead <= LowValue;
             HighValue_ToBeRead <= HighValue;
             Type_ToBeRead <= TypeValue;
@@ -316,9 +310,7 @@ begin
                       HighValue_Written,
                       Type_Written);
         if (PushToStackState = StateEnd) then
-            SizeValue <= std_logic_vector(
-                unsigned(SizeValue) + to_unsigned(1, SizeValue'LENGTH)
-            );
+            StackSize <= StackSize + 1;
             StackState <= StackStateIdle;
         end if;
       --
@@ -333,9 +325,7 @@ begin
                        HighValue_ToBeRead,
                        Type_ToBeRead);
         if (PopFromStackState = StateEnd) then
-            SizeValue <= std_logic_vector(
-                unsigned(SizeValue) - to_unsigned(1, SizeValue'LENGTH)
-            );
+            StackSize <= StackSize - 1;
             StackState <= StackStateIdle;
         end if;
       --
@@ -349,9 +339,7 @@ begin
                       LowValue_Written,
                       Type_Written);
         if (PushToStackState = StateEnd) then
-            SizeValue <= std_logic_vector(
-                unsigned(SizeValue) + to_unsigned(1, SizeValue'LENGTH)
-            );
+            StackSize <= StackSize + 1;
             StackState <= StackStateIdle;
         end if;
       --
@@ -366,9 +354,7 @@ begin
                        Type_ToBeRead);
         if (PopFromStackState = StateEnd) then
             HighValue_ToBeRead <= (others => '0');
-            SizeValue <= std_logic_vector(
-                unsigned(SizeValue) - to_unsigned(1, SizeValue'LENGTH)
-            );
+            StackSize <= StackSize - 1;
             StackState <= StackStateIdle;
         end if;
       elsif(StackState = StackStateError) then
@@ -394,7 +380,7 @@ begin
       Action => Action,
       WRegPulse_ControlReg => WRegPulse_ControlReg,
       Busy => Busy,
-      SizeValue => SizeValue,
+      SizeValue => std_logic_vector(StackSize),
       HighValue_ToBeRead => HighValue_ToBeRead,
       HighValue_Written => HighValue_Written,
       LowValue_ToBeRead => LowValue_ToBeRead,
