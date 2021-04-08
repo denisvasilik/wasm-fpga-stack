@@ -57,7 +57,6 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   signal StackBlk_Unoccupied_Ack : std_logic;
 
   signal StackState : std_logic_vector(7 downto 0);
-  signal ReturnStackState : std_logic_vector(7 downto 0);
 
   signal StackAddress : std_logic_vector(23 downto 0);
   signal StackAddress_ToBeRead : std_logic_vector(31 downto 0);
@@ -79,7 +78,6 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   signal ToStackMemory : T_ToWishbone;
   signal FromStackMemory : T_FromWishbone;
 
-  -- LocalGet internal state
   signal ActivationFramePtr : std_logic_vector(23 downto 0);
 
   signal ActivationFrameAddress_ToBeRead : std_logic_vector(31 downto 0);
@@ -114,52 +112,12 @@ begin
   Stack : process (Clk, Rst) is
     constant StackStateIdle : std_logic_vector(7 downto 0) := x"00";
     constant StackStatePush32Bit0 : std_logic_vector(7 downto 0) := x"01";
-    constant StackStatePush32Bit1 : std_logic_vector(7 downto 0) := x"02";
-    constant StackStatePop32Bit0 : std_logic_vector(7 downto 0) := x"03";
-    constant StackStatePop32Bit1 : std_logic_vector(7 downto 0) := x"04";
-    constant StackStatePush64Bit0 : std_logic_vector(7 downto 0) := x"05";
-    constant StackStatePush64Bit1 : std_logic_vector(7 downto 0) := x"06";
-    constant StackStatePush64Bit2 : std_logic_vector(7 downto 0) := x"07";
-    constant StackStatePush64Bit3 : std_logic_vector(7 downto 0) := x"08";
-    constant StackStatePop64Bit0 : std_logic_vector(7 downto 0) := x"09";
-    constant StackStatePop64Bit1 : std_logic_vector(7 downto 0) := x"0A";
-    constant StackStatePop64Bit2 : std_logic_vector(7 downto 0) := x"0B";
-    constant StackStatePop64Bit3 : std_logic_vector(7 downto 0) := x"0C";
-    constant StackStatePushType0 : std_logic_vector(7 downto 0) := x"0D";
-    constant StackStatePushType1 : std_logic_vector(7 downto 0) := x"0E";
-    constant StackStatePushType2 : std_logic_vector(7 downto 0) := x"0F";
-    constant StackStatePopType0 : std_logic_vector(7 downto 0) := x"10";
-    constant StackStatePopType1 : std_logic_vector(7 downto 0) := x"11";
-    constant StackStatePopType2 : std_logic_vector(7 downto 0) := x"12";
-    constant StackStateLocalGet0 : std_logic_vector(7 downto 0) := x"13";
-    constant StackStateLocalGet1 : std_logic_vector(7 downto 0) := x"14";
-    constant StackStateLocalGet2 : std_logic_vector(7 downto 0) := x"15";
-    constant StackStateLocalGet3 : std_logic_vector(7 downto 0) := x"16";
-    constant StackStateLocalGet4 : std_logic_vector(7 downto 0) := x"17";
-    constant StackStateLocalGet5 : std_logic_vector(7 downto 0) := x"18";
-    constant StackStateLocalGet6 : std_logic_vector(7 downto 0) := x"19";
-    constant StackStateLocalGet7 : std_logic_vector(7 downto 0) := x"1A";
-    constant StackStateLocalGet8 : std_logic_vector(7 downto 0) := x"1B";
-    constant StackStateLocalGet9 : std_logic_vector(7 downto 0) := x"1C";
-    constant StackStateLocalGet10 : std_logic_vector(7 downto 0) := x"1D";
-    constant StackStateLocalGet11 : std_logic_vector(7 downto 0) := x"1E";
-    constant StackStateLocalSet0 : std_logic_vector(7 downto 0) := x"20";
-    constant StackStateLocalSet1 : std_logic_vector(7 downto 0) := x"21";
-    constant StackStateLocalSet2 : std_logic_vector(7 downto 0) := x"22";
-    constant StackStateLocalSet3 : std_logic_vector(7 downto 0) := x"23";
-    constant StackStateLocalSet4 : std_logic_vector(7 downto 0) := x"24";
-    constant StackStateLocalSet5 : std_logic_vector(7 downto 0) := x"25";
-    constant StackStateLocalSet6 : std_logic_vector(7 downto 0) := x"26";
-    constant StackStateLocalSet7 : std_logic_vector(7 downto 0) := x"27";
-    constant StackStateLocalSet8 : std_logic_vector(7 downto 0) := x"28";
-    constant StackStateActivationFrame0 : std_logic_vector(7 downto 0) := x"29";
-    constant StackStateActivationFrame1 : std_logic_vector(7 downto 0) := x"2A";
-    constant StackStateActivationFrame2 : std_logic_vector(7 downto 0) := x"2B";
-    constant StackStateActivationFrame3 : std_logic_vector(7 downto 0) := x"2C";
-    constant StackStateActivationFrame4 : std_logic_vector(7 downto 0) := x"2D";
-    constant StackStateActivationFrame5 : std_logic_vector(7 downto 0) := x"2E";
-    constant StackStateActivationFrame6 : std_logic_vector(7 downto 0) := x"2F";
-    constant StackStateActivationFrame7 : std_logic_vector(7 downto 0) := x"30";
+    constant StackStatePop32Bit0 : std_logic_vector(7 downto 0) := x"02";
+    constant StackStatePush64Bit0 : std_logic_vector(7 downto 0) := x"03";
+    constant StackStatePop64Bit0 : std_logic_vector(7 downto 0) := x"04";
+    constant StackStateLocalGet0 : std_logic_vector(7 downto 0) := x"05";
+    constant StackStateLocalSet0 : std_logic_vector(7 downto 0) := x"06";
+    constant StackStateActivationFrame0 : std_logic_vector(7 downto 0) := x"07";
     constant StackStateError : std_logic_vector(7 downto 0) := x"FF";
   begin
     if (Rst = '1') then
@@ -190,7 +148,6 @@ begin
       PushToStackState <= StateIdle;
       PopFromStackState <= StateIdle;
       StackState <= StackStateIdle;
-      ReturnStackState <= StackStateIdle;
     elsif rising_edge(Clk) then
       if(StackState = StackStateIdle) then
         Busy <= '0';
@@ -238,15 +195,7 @@ begin
             end if;
         end if;
       --
-      -- Activation Frame:
-      --
-      --  local 0
-      --  local 1
-      --  local 2
-      --  module instance id (type: activation frame)
-      --  max locals (type: activation frame)
-      --  max results (type: activation frame)
-      --  return address (type: activation frame)
+      -- Create Activation Frame
       --
       elsif(StackState = StackStateActivationFrame0) then
         CreateActivationFrame(ActivationFrameState,
@@ -260,16 +209,15 @@ begin
                               ReturnAddress);
         if (ActivationFrameState = StateEnd) then
             StackSize <= StackSize + 1;
+            ActivationFrameAddress <= std_logic_vector(
+                unsigned(StackAddress) - ActivationFrameSize
+            );
             StackState <= StackStateIdle;
         end if;
       --
       -- Remove Activation Frame
       --
-      -- TODO: Set ActivationFrameAddress
-      --
-      -- if (Type_Written = WASMFPGASTACK_VAL_Activation) then
-      --    ActivationFrameAddress <= StackAddress;
-      -- end if;
+
       --
       -- Local Set
       --
@@ -296,7 +244,6 @@ begin
       -- Local Get
       --
       elsif(StackState = StackStateLocalGet0) then
-        -- Local Get TypeValue
         LocalGet(LocalGetState,
                  PushToStackState,
                  ToStackMemory,

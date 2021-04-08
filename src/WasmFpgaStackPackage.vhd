@@ -7,6 +7,8 @@ library work;
 
 package WasmFpgaStackPackage is
 
+    constant ActivationFrameSize : natural := 6;
+
     constant StateIdle : std_logic_vector(15 downto 0) := x"0000";
     constant State0 : std_logic_vector(15 downto 0) := x"0001";
     constant State1 : std_logic_vector(15 downto 0) := x"0002";
@@ -163,7 +165,7 @@ package body WasmFpgaStackPackage is
     begin
         if (State = StateIdle) then
             ActivationFramePtr <= std_logic_vector(
-                unsigned(ActivationFrameAddress) - 
+                unsigned(ActivationFrameAddress) -
                 resize((unsigned(LocalIndex) + 1) * 3, ActivationFramePtr'LENGTH)
             );
             State <= State0;
@@ -247,7 +249,7 @@ package body WasmFpgaStackPackage is
     begin
         if (State = StateIdle) then
             ActivationFramePtr <= std_logic_vector(
-                unsigned(ActivationFrameAddress) - 
+                unsigned(ActivationFrameAddress) -
                 resize((unsigned(LocalIndex) + 1) * 3, ActivationFramePtr'LENGTH)
             );
             State <= State0;
