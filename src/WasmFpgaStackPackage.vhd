@@ -50,6 +50,20 @@ package WasmFpgaStackPackage is
                                     signal MaxResults : in std_logic_vector;
                                     signal ReturnAddress : in std_logic_vector);
 
+    procedure LocalSet(signal State: inout std_logic_vector;
+                       signal PopFromStackState : inout std_logic_vector;
+                       signal ToStackMemory : out T_ToWishbone;
+                       signal FromStackMemory : in T_FromWishbone;
+                       signal ActivationFrameAddress : in std_logic_vector;
+                       signal StackAddress : inout std_logic_vector;
+                       signal LocalIndex : in std_logic_vector;
+                       signal HighValue : inout std_logic_vector(31 downto 0);
+                       signal LowValue : inout std_logic_vector(31 downto 0);
+                       signal TypeValue : inout std_logic_vector(2 downto 0);
+                       signal MaxLocals : inout std_logic_vector;
+                       signal ActivationFramePtr : inout std_logic_vector;
+                       signal CurrentLocalIndex : inout std_logic_vector);
+
     procedure LocalGet(signal State: inout std_logic_vector;
                        signal PushToStackState : inout std_logic_vector;
                        signal ToStackMemory : out T_ToWishbone;
@@ -62,7 +76,6 @@ package WasmFpgaStackPackage is
                        signal TypeValue : inout std_logic_vector(2 downto 0);
                        signal MaxLocals : inout std_logic_vector;
                        signal ActivationFramePtr : inout std_logic_vector;
-                       signal LocalIndexPtr : inout std_logic_vector;
                        signal CurrentLocalIndex : inout std_logic_vector);
 
     procedure PushToStack32(signal State : inout std_logic_vector;
@@ -100,15 +113,19 @@ end;
 package body WasmFpgaStackPackage is
 
     --
-    -- Activation Frame:
+    -- Activation Frame Creation
     --
-    --  local 0
-    --  local 1
-    --  local 2
-    --  module instance id (type: activation frame)
-    --  max locals (type: activation frame)
-    --  max results (type: activation frame)
-    --  return address (type: activation frame)
+    -- Pop number of arguments from stack and push them back on stack as local
+    -- using a specific memory size for indexed access.
+    --
+    --
+    -- local 0 (64 Bit value, 32 Bit type)
+    -- local 1 (64 Bit value, 32 Bit type)
+    -- local 2 (64 Bit value, 32 Bit type)
+    -- module instance id (type: activation frame)
+    -- max locals (type: activation frame)
+    -- max results (type: activation frame)
+    -- return address (type: activation frame)
     --
     procedure CreateActivationFrame(signal State : inout std_logic_vector;
                                     signal PushToStackState : inout std_logic_vector;
@@ -173,6 +190,34 @@ package body WasmFpgaStackPackage is
         end if;
     end;
 
+    procedure LocalSet(signal State: inout std_logic_vector;
+                       signal PopFromStackState : inout std_logic_vector;
+                       signal ToStackMemory : out T_ToWishbone;
+                       signal FromStackMemory : in T_FromWishbone;
+                       signal ActivationFrameAddress : in std_logic_vector;
+                       signal StackAddress : inout std_logic_vector;
+                       signal LocalIndex : in std_logic_vector;
+                       signal HighValue : inout std_logic_vector(31 downto 0);
+                       signal LowValue : inout std_logic_vector(31 downto 0);
+                       signal TypeValue : inout std_logic_vector(2 downto 0);
+                       signal MaxLocals : inout std_logic_vector;
+                       signal ActivationFramePtr : inout std_logic_vector;
+                       signal CurrentLocalIndex : inout std_logic_vector) is
+    begin
+        if (State = StateIdle) then
+            State <= State0;
+        elsif (State = State0) then
+        elsif (State = StateEnd) then
+            State <= StateIdle;
+        else
+            State <= StateError;
+        end if;
+    end;
+
+    --
+    -- TODO: + Lower number of parameters by using record types
+    --       + Do not write stack signals directly, use the stack procedure instead
+    --
     procedure LocalGet(signal State: inout std_logic_vector;
                        signal PushToStackState : inout std_logic_vector;
                        signal ToStackMemory : out T_ToWishbone;
@@ -185,12 +230,10 @@ package body WasmFpgaStackPackage is
                        signal TypeValue : inout std_logic_vector(2 downto 0);
                        signal MaxLocals : inout std_logic_vector;
                        signal ActivationFramePtr : inout std_logic_vector;
-                       signal LocalIndexPtr : inout std_logic_vector;
                        signal CurrentLocalIndex : inout std_logic_vector) is
     begin
         if (State = StateIdle) then
             MaxLocals <= (others => '0');
-            LocalIndexPtr <= (others => '0');
             CurrentLocalIndex <= (others => '0');
             ActivationFramePtr <= std_logic_vector(
                 unsigned(ActivationFrameAddress) +

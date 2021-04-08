@@ -74,6 +74,7 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   signal PushToStackState : std_logic_vector(15 downto 0);
   signal PopFromStackState : std_logic_vector(15 downto 0);
   signal LocalGetState : std_logic_vector(15 downto 0);
+  signal LocalSetState : std_logic_vector(15 downto 0);
 
   signal ToStackMemory : T_ToWishbone;
   signal FromStackMemory : T_FromWishbone;
@@ -81,7 +82,6 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   -- LocalGet internal state
   signal LocalGet_MaxLocals : std_logic_vector(31 downto 0);
   signal LocalGet_ActivationFramePtr : std_logic_vector(23 downto 0);
-  signal LocalGet_LocalIndexPtr : std_logic_vector(23 downto 0);
   signal LocalGet_CurrentLocalIndex : std_logic_vector(31 downto 0);
 
   signal ActivationFrameAddress_ToBeRead : std_logic_vector(31 downto 0);
@@ -175,7 +175,6 @@ begin
       );
       LocalGet_ActivationFramePtr <= (others => '0');
       LocalGet_MaxLocals <= (others => '0');
-      LocalGet_LocalIndexPtr <= (others => '0');
       LocalGet_CurrentLocalIndex <= (others => '0');
       LowValue <= (others => '0');
       HighValue <= (others => '0');
@@ -188,6 +187,7 @@ begin
       ActivationFrameAddress <= (others => '0');
       ActivationFrameState <= StateIdle;
       LocalGetState <= StateIdle;
+      LocalSetState <= StateIdle;
       PushToStackState <= StateIdle;
       PopFromStackState <= StateIdle;
       StackState <= StackStateIdle;
@@ -271,7 +271,27 @@ begin
       -- if (Type_Written = WASMFPGASTACK_VAL_Activation) then
       --    ActivationFrameAddress <= StackAddress;
       -- end if;
-
+      --
+      -- Local Set
+      --
+      elsif(StackState = StackStateLocalSet0) then
+        LocalSet(LocalSetState,
+                 PopFromStackState,
+                 ToStackMemory,
+                 FromStackMemory,
+                 ActivationFrameAddress,
+                 StackAddress,
+                 LocalIndex,
+                 HighValue,
+                 LowValue,
+                 TypeValue,
+                 LocalGet_MaxLocals,
+                 LocalGet_ActivationFramePtr,
+                 LocalGet_CurrentLocalIndex);
+        if (LocalSetState = StateEnd) then
+            StackSize <= StackSize - 1;
+            StackState <= StackStateIdle;
+        end if;
       --
       -- Local Get
       --
@@ -289,7 +309,6 @@ begin
                  TypeValue,
                  LocalGet_MaxLocals,
                  LocalGet_ActivationFramePtr,
-                 LocalGet_LocalIndexPtr,
                  LocalGet_CurrentLocalIndex);
         if (LocalGetState = StateEnd) then
             StackSize <= StackSize + 1;
