@@ -88,6 +88,8 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   signal ActivationFrameAddress_Written : std_logic_vector(31 downto 0);
   signal WRegPulse_ActivationFrameAddressReg : std_logic;
 
+  signal Zero : std_logic_vector(31 downto 0) := x"00000000";
+
 begin
 
   Rst <= not nRst;
@@ -165,6 +167,7 @@ begin
     if (Rst = '1') then
       Busy <= '1';
       Trap <= '0';
+      Zero <= (others => '0');
       ToStackMemory <= (
           Adr => (others => '0'),
           Sel => (others => '1'),
@@ -351,11 +354,12 @@ begin
       -- Push 32 Bit
       --
       elsif(StackState = StackStatePush32Bit0) then
-        PushToStack32(PushToStackState,
+        PushToStack64(PushToStackState,
                       ToStackMemory,
                       FromStackMemory,
                       StackAddress,
                       LowValue_Written,
+                      Zero,
                       Type_Written);
         if (PushToStackState = StateEnd) then
             StackSize <= StackSize + 1;
@@ -365,11 +369,12 @@ begin
       -- Pop 32 Bit
       --
       elsif(StackState = StackStatePop32Bit0) then
-        PopFromStack32(PopFromStackState,
+        PopFromStack64(PopFromStackState,
                        ToStackMemory,
                        FromStackMemory,
                        StackAddress,
                        LowValue_ToBeRead,
+                       HighValue_ToBeRead,
                        Type_ToBeRead);
         if (PopFromStackState = StateEnd) then
             HighValue_ToBeRead <= (others => '0');
