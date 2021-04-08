@@ -162,8 +162,70 @@ package body WasmFpgaStackPackage is
                        signal ActivationFramePtr : inout std_logic_vector) is
     begin
         if (State = StateIdle) then
+            ActivationFramePtr <= std_logic_vector(
+                unsigned(ActivationFrameAddress) - 
+                resize((unsigned(LocalIndex) + 1) * 3, ActivationFramePtr'LENGTH)
+            );
             State <= State0;
         elsif (State = State0) then
+            PopFromStack64(PopFromStackState,
+                           ToStackMemory,
+                           FromStackMemory,
+                           StackAddress,
+                           LowValue,
+                           HighValue,
+                           TypeValue);
+            if (PopFromStackState = StateEnd) then
+                State <= State1;
+            end if;
+        elsif (State = State1) then
+            -- Set low value of local at index
+            ToStackMemory.Cyc <= "1";
+            ToStackMemory.Stb <= '1';
+            ToStackMemory.We <= '1';
+            ToStackMemory.Adr <= ActivationFramePtr;
+            ToStackMemory.DatIn <= LowValue;
+            State <= State1;
+        elsif(State = State1) then
+            if (FromStackMemory.Ack = '1') then
+                ToStackMemory.Cyc <= "0";
+                ToStackMemory.Stb <= '0';
+                ToStackMemory.We <= '0';
+                ActivationFramePtr <= std_logic_vector(unsigned(ActivationFramePtr) + 1);
+                State <= State2;
+            end if;
+        elsif (State = State2) then
+            -- Set low value of local at index
+            ToStackMemory.Cyc <= "1";
+            ToStackMemory.Stb <= '1';
+            ToStackMemory.We <= '1';
+            ToStackMemory.Adr <= ActivationFramePtr;
+            ToStackMemory.DatIn <= HighValue;
+            State <= State3;
+        elsif(State = State3) then
+            if (FromStackMemory.Ack = '1') then
+                ToStackMemory.Cyc <= "0";
+                ToStackMemory.Stb <= '0';
+                ToStackMemory.We <= '0';
+                ActivationFramePtr <= std_logic_vector(unsigned(ActivationFramePtr) + 1);
+                State <= State4;
+            end if;
+        elsif(State = State4) then
+            -- Set type value of local at index
+            ToStackMemory.Cyc <= "1";
+            ToStackMemory.Stb <= '1';
+            ToStackMemory.We <= '1';
+            ToStackMemory.Adr <= ActivationFramePtr;
+            ToStackMemory.DatIn <= (31 downto 3 => '0') & TypeValue;
+            State <= State5;
+        elsif(State = State5) then
+            if (FromStackMemory.Ack = '1') then
+                ToStackMemory.Cyc <= "0";
+                ToStackMemory.Stb <= '0';
+                ToStackMemory.We <= '0';
+                ActivationFramePtr <= std_logic_vector(unsigned(ActivationFramePtr) + 1);
+                State <= StateEnd;
+            end if;
         elsif (State = StateEnd) then
             State <= StateIdle;
         else
@@ -171,10 +233,6 @@ package body WasmFpgaStackPackage is
         end if;
     end;
 
-    --
-    -- TODO: + Lower number of parameters by using record types
-    --       + Do not write stack signals directly, use the stack procedure instead
-    --
     procedure LocalGet(signal State: inout std_logic_vector;
                        signal PushToStackState : inout std_logic_vector;
                        signal ToStackMemory : out T_ToWishbone;
@@ -189,8 +247,8 @@ package body WasmFpgaStackPackage is
     begin
         if (State = StateIdle) then
             ActivationFramePtr <= std_logic_vector(
-                unsigned(ActivationFrameAddress) -
-                unsigned(LocalIndex) * 3
+                unsigned(ActivationFrameAddress) - 
+                resize((unsigned(LocalIndex) + 1) * 3, ActivationFramePtr'LENGTH)
             );
             State <= State0;
         elsif (State = State0) then
