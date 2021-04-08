@@ -287,6 +287,9 @@ begin
                  ActivationFramePtr);
         if (LocalSetState = StateEnd) then
             StackSize <= StackSize - 1;
+            LowValue_ToBeRead <= LowValue;
+            HighValue_ToBeRead <= HighValue;
+            Type_ToBeRead <= TypeValue;
             StackState <= StackStateIdle;
         end if;
       --

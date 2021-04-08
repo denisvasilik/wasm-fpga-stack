@@ -185,40 +185,40 @@ package body WasmFpgaStackPackage is
             ToStackMemory.We <= '1';
             ToStackMemory.Adr <= ActivationFramePtr;
             ToStackMemory.DatIn <= LowValue;
-            State <= State1;
-        elsif(State = State1) then
+            State <= State2;
+        elsif(State = State2) then
             if (FromStackMemory.Ack = '1') then
                 ToStackMemory.Cyc <= "0";
                 ToStackMemory.Stb <= '0';
                 ToStackMemory.We <= '0';
                 ActivationFramePtr <= std_logic_vector(unsigned(ActivationFramePtr) + 1);
-                State <= State2;
+                State <= State3;
             end if;
-        elsif (State = State2) then
+        elsif (State = State3) then
             -- Set low value of local at index
             ToStackMemory.Cyc <= "1";
             ToStackMemory.Stb <= '1';
             ToStackMemory.We <= '1';
             ToStackMemory.Adr <= ActivationFramePtr;
             ToStackMemory.DatIn <= HighValue;
-            State <= State3;
-        elsif(State = State3) then
+            State <= State4;
+        elsif(State = State4) then
             if (FromStackMemory.Ack = '1') then
                 ToStackMemory.Cyc <= "0";
                 ToStackMemory.Stb <= '0';
                 ToStackMemory.We <= '0';
                 ActivationFramePtr <= std_logic_vector(unsigned(ActivationFramePtr) + 1);
-                State <= State4;
+                State <= State5;
             end if;
-        elsif(State = State4) then
+        elsif(State = State5) then
             -- Set type value of local at index
             ToStackMemory.Cyc <= "1";
             ToStackMemory.Stb <= '1';
             ToStackMemory.We <= '1';
             ToStackMemory.Adr <= ActivationFramePtr;
             ToStackMemory.DatIn <= (31 downto 3 => '0') & TypeValue;
-            State <= State5;
-        elsif(State = State5) then
+            State <= State6;
+        elsif(State = State6) then
             if (FromStackMemory.Ack = '1') then
                 ToStackMemory.Cyc <= "0";
                 ToStackMemory.Stb <= '0';

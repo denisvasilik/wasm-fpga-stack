@@ -17,9 +17,9 @@ BEGIN_SUB
     -- CALL $TEST_STACK_OPERATION_64_BIT
     -- CALL $TEST_MULTIPLE_STACK_OPERATIONS_32_BIT
     -- CALL $TEST_MULTIPLE_STACK_OPERATIONS_64_BIT
-    CALL $TEST_LOCAL_GET_32_BIT
+    -- CALL $TEST_LOCAL_GET_32_BIT
     -- CALL $TEST_LOCAL_GET_64_BIT
-    -- CALL $TEST_LOCAL_SET_32_BIT
+    CALL $TEST_LOCAL_SET_32_BIT
     -- CALL $TEST_LOCAL_SET_64_BIT
     -- CALL $TEST_CREATE_ACTIVATION_FRAME_SINGLE
     -- CALL $TEST_CREATE_ACTIVATION_FRAME_MULTIPLE
@@ -323,7 +323,7 @@ BEGIN_SUB
     WRITE_RAM 32 #xE $STACKBLK_VAL_i32 -- TypeValue
     WRITE_RAM 32 #xF #x0 -- Reserved
 
-    -- Start address of current stack frame
+    -- Set stack address after current activation frame
     WRITE_FPGA 32 $STACKBLK_ADR_StackAddressReg #x10
 
     EQU_VAR WB_VALUE $STACKBLK_VAL_DoRun
@@ -394,8 +394,11 @@ BEGIN_SUB
     WRITE_RAM 32 #x16 #x00000000 -- HighValue
     WRITE_RAM 32 #x17 $STACKBLK_VAL_i32 -- TypeValue
 
-    -- Start address of current stack frame
-    WRITE_FPGA 32 $STACKBLK_ADR_StackAddressReg #x0F
+    -- Set activaten frame address
+    WRITE_FPGA 32 $STACKBLK_ADR_ActivationFrameAddressReg #x0F
+
+    -- Set stack address after current activation frame + 1 stack value
+    WRITE_FPGA 32 $STACKBLK_ADR_StackAddressReg #x18
 
     EQU_VAR WB_VALUE $STACKBLK_VAL_DoRun
     OR_VAR WB_VALUE $STACKBLK_VAL_LocalSet
