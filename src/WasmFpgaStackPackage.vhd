@@ -104,7 +104,6 @@ package body WasmFpgaStackPackage is
     -- Pop number of arguments from stack and push them back on stack as local
     -- using a specific memory size for indexed access.
     --
-    --
     -- local 0 (64 Bit value, 32 Bit type)
     -- local 1 (64 Bit value, 32 Bit type)
     -- local 2 (64 Bit value, 32 Bit type)
