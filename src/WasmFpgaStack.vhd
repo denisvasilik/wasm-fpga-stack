@@ -80,9 +80,7 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   signal FromStackMemory : T_FromWishbone;
 
   -- LocalGet internal state
-  signal LocalGet_MaxLocals : std_logic_vector(31 downto 0);
-  signal LocalGet_ActivationFramePtr : std_logic_vector(23 downto 0);
-  signal LocalGet_CurrentLocalIndex : std_logic_vector(31 downto 0);
+  signal ActivationFramePtr : std_logic_vector(23 downto 0);
 
   signal ActivationFrameAddress_ToBeRead : std_logic_vector(31 downto 0);
   signal ActivationFrameAddress_Written : std_logic_vector(31 downto 0);
@@ -176,9 +174,7 @@ begin
           Stb => '0',
           Cyc => (others => '0')
       );
-      LocalGet_ActivationFramePtr <= (others => '0');
-      LocalGet_MaxLocals <= (others => '0');
-      LocalGet_CurrentLocalIndex <= (others => '0');
+      ActivationFramePtr <= (others => '0');
       LowValue <= (others => '0');
       HighValue <= (others => '0');
       TypeValue <= (others => '0');
@@ -288,9 +284,7 @@ begin
                  HighValue,
                  LowValue,
                  TypeValue,
-                 LocalGet_MaxLocals,
-                 LocalGet_ActivationFramePtr,
-                 LocalGet_CurrentLocalIndex);
+                 ActivationFramePtr);
         if (LocalSetState = StateEnd) then
             StackSize <= StackSize - 1;
             StackState <= StackStateIdle;
@@ -310,9 +304,7 @@ begin
                  HighValue,
                  LowValue,
                  TypeValue,
-                 LocalGet_MaxLocals,
-                 LocalGet_ActivationFramePtr,
-                 LocalGet_CurrentLocalIndex);
+                 ActivationFramePtr);
         if (LocalGetState = StateEnd) then
             StackSize <= StackSize + 1;
             LowValue_ToBeRead <= LowValue;
