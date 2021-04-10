@@ -41,10 +41,14 @@ entity StackBlk_WasmFpgaStack is
         StackAddress_ToBeRead : in std_logic_vector(31 downto 0);
         StackAddress_Written : out std_logic_vector(31 downto 0);
         WRegPulse_StackAddressReg : out std_logic;
-        MaxLocals : out std_logic_vector(31 downto 0);
-        MaxResults : out std_logic_vector(31 downto 0);
-        ReturnAddress : out std_logic_vector(31 downto 0);
-        ModuleInstanceUid : out std_logic_vector(31 downto 0);
+        MaxLocals_ToBeRead : in std_logic_vector(31 downto 0);
+        MaxLocals_Written : out std_logic_vector(31 downto 0);
+        MaxResults_ToBeRead : in std_logic_vector(31 downto 0);
+        MaxResults_Written : out std_logic_vector(31 downto 0);
+        ReturnAddress_ToBeRead : in std_logic_vector(31 downto 0);
+        ReturnAddress_Written : out std_logic_vector(31 downto 0);
+        ModuleInstanceUid_ToBeRead : in std_logic_vector(31 downto 0);
+        ModuleInstanceUid_Written : out std_logic_vector(31 downto 0);
         ActivationFrameAddress_ToBeRead : in std_logic_vector(31 downto 0);
         ActivationFrameAddress_Written : out std_logic_vector(31 downto 0);
         WRegPulse_ActivationFrameAddressReg : out std_logic
@@ -150,10 +154,10 @@ architecture arch_for_synthesys of StackBlk_WasmFpgaStack is
     signal WReg_Type_Written : std_logic_vector(2 downto 0);
     signal WReg_LocalIndex : std_logic_vector(31 downto 0);
     signal WReg_StackAddress_Written : std_logic_vector(31 downto 0);
-    signal WReg_MaxLocals : std_logic_vector(31 downto 0);
-    signal WReg_MaxResults : std_logic_vector(31 downto 0);
-    signal WReg_ReturnAddress : std_logic_vector(31 downto 0);
-    signal WReg_ModuleInstanceUid : std_logic_vector(31 downto 0);
+    signal WReg_MaxLocals_Written : std_logic_vector(31 downto 0);
+    signal WReg_MaxResults_Written : std_logic_vector(31 downto 0);
+    signal WReg_ReturnAddress_Written : std_logic_vector(31 downto 0);
+    signal WReg_ModuleInstanceUid_Written : std_logic_vector(31 downto 0);
     signal WReg_ActivationFrameAddress_Written : std_logic_vector(31 downto 0);
 
 begin 
@@ -647,31 +651,31 @@ begin
     begin 
         if (Rst = '1') then 
             PreMuxAck_MaxLocalsReg <= '0';
-            WReg_MaxLocals <= "00000000000000000000000000000000";
+            WReg_MaxLocals_Written <= "00000000000000000000000000000000";
         elsif rising_edge(Clk) then
             PreMuxAck_MaxLocalsReg <= WriteDiff_MaxLocalsReg or ReadDiff_MaxLocalsReg; 
             if (WriteDiff_MaxLocalsReg = '1') then
-                if (Sel(3) = '1') then WReg_MaxLocals(31 downto 24) <= DatIn(31 downto 24); end if;
-                if (Sel(2) = '1') then WReg_MaxLocals(23 downto 16) <= DatIn(23 downto 16); end if;
-                if (Sel(1) = '1') then WReg_MaxLocals(15 downto 8) <= DatIn(15 downto 8); end if;
-                if (Sel(0) = '1') then WReg_MaxLocals(7 downto 0) <= DatIn(7 downto 0); end if;
+                if (Sel(3) = '1') then WReg_MaxLocals_Written(31 downto 24) <= DatIn(31 downto 24); end if;
+                if (Sel(2) = '1') then WReg_MaxLocals_Written(23 downto 16) <= DatIn(23 downto 16); end if;
+                if (Sel(1) = '1') then WReg_MaxLocals_Written(15 downto 8) <= DatIn(15 downto 8); end if;
+                if (Sel(0) = '1') then WReg_MaxLocals_Written(7 downto 0) <= DatIn(7 downto 0); end if;
             else
             end if;
         end if;
     end process;
 
     mux_premuxdatout_MaxLocalsReg0 : process (
-            WReg_MaxLocals
+            MaxLocals_ToBeRead
             )
     begin 
          PreMuxDatOut_MaxLocalsReg <= x"0000_0000";
-         PreMuxDatOut_MaxLocalsReg(31 downto 0) <= WReg_MaxLocals;
+         PreMuxDatOut_MaxLocalsReg(31 downto 0) <= MaxLocals_ToBeRead;
     end process;
 
 
 
 
-    MaxLocals <= WReg_MaxLocals;
+    MaxLocals_Written <= WReg_MaxLocals_Written;
 
     -- .......... MaxResultsReg, Width: 32, Type: Synchronous  .......... 
 
@@ -694,31 +698,31 @@ begin
     begin 
         if (Rst = '1') then 
             PreMuxAck_MaxResultsReg <= '0';
-            WReg_MaxResults <= "00000000000000000000000000000000";
+            WReg_MaxResults_Written <= "00000000000000000000000000000000";
         elsif rising_edge(Clk) then
             PreMuxAck_MaxResultsReg <= WriteDiff_MaxResultsReg or ReadDiff_MaxResultsReg; 
             if (WriteDiff_MaxResultsReg = '1') then
-                if (Sel(3) = '1') then WReg_MaxResults(31 downto 24) <= DatIn(31 downto 24); end if;
-                if (Sel(2) = '1') then WReg_MaxResults(23 downto 16) <= DatIn(23 downto 16); end if;
-                if (Sel(1) = '1') then WReg_MaxResults(15 downto 8) <= DatIn(15 downto 8); end if;
-                if (Sel(0) = '1') then WReg_MaxResults(7 downto 0) <= DatIn(7 downto 0); end if;
+                if (Sel(3) = '1') then WReg_MaxResults_Written(31 downto 24) <= DatIn(31 downto 24); end if;
+                if (Sel(2) = '1') then WReg_MaxResults_Written(23 downto 16) <= DatIn(23 downto 16); end if;
+                if (Sel(1) = '1') then WReg_MaxResults_Written(15 downto 8) <= DatIn(15 downto 8); end if;
+                if (Sel(0) = '1') then WReg_MaxResults_Written(7 downto 0) <= DatIn(7 downto 0); end if;
             else
             end if;
         end if;
     end process;
 
     mux_premuxdatout_MaxResultsReg0 : process (
-            WReg_MaxResults
+            MaxResults_ToBeRead
             )
     begin 
          PreMuxDatOut_MaxResultsReg <= x"0000_0000";
-         PreMuxDatOut_MaxResultsReg(31 downto 0) <= WReg_MaxResults;
+         PreMuxDatOut_MaxResultsReg(31 downto 0) <= MaxResults_ToBeRead;
     end process;
 
 
 
 
-    MaxResults <= WReg_MaxResults;
+    MaxResults_Written <= WReg_MaxResults_Written;
 
     -- .......... ReturnAddressReg, Width: 32, Type: Synchronous  .......... 
 
@@ -741,31 +745,31 @@ begin
     begin 
         if (Rst = '1') then 
             PreMuxAck_ReturnAddressReg <= '0';
-            WReg_ReturnAddress <= "00000000000000000000000000000000";
+            WReg_ReturnAddress_Written <= "00000000000000000000000000000000";
         elsif rising_edge(Clk) then
             PreMuxAck_ReturnAddressReg <= WriteDiff_ReturnAddressReg or ReadDiff_ReturnAddressReg; 
             if (WriteDiff_ReturnAddressReg = '1') then
-                if (Sel(3) = '1') then WReg_ReturnAddress(31 downto 24) <= DatIn(31 downto 24); end if;
-                if (Sel(2) = '1') then WReg_ReturnAddress(23 downto 16) <= DatIn(23 downto 16); end if;
-                if (Sel(1) = '1') then WReg_ReturnAddress(15 downto 8) <= DatIn(15 downto 8); end if;
-                if (Sel(0) = '1') then WReg_ReturnAddress(7 downto 0) <= DatIn(7 downto 0); end if;
+                if (Sel(3) = '1') then WReg_ReturnAddress_Written(31 downto 24) <= DatIn(31 downto 24); end if;
+                if (Sel(2) = '1') then WReg_ReturnAddress_Written(23 downto 16) <= DatIn(23 downto 16); end if;
+                if (Sel(1) = '1') then WReg_ReturnAddress_Written(15 downto 8) <= DatIn(15 downto 8); end if;
+                if (Sel(0) = '1') then WReg_ReturnAddress_Written(7 downto 0) <= DatIn(7 downto 0); end if;
             else
             end if;
         end if;
     end process;
 
     mux_premuxdatout_ReturnAddressReg0 : process (
-            WReg_ReturnAddress
+            ReturnAddress_ToBeRead
             )
     begin 
          PreMuxDatOut_ReturnAddressReg <= x"0000_0000";
-         PreMuxDatOut_ReturnAddressReg(31 downto 0) <= WReg_ReturnAddress;
+         PreMuxDatOut_ReturnAddressReg(31 downto 0) <= ReturnAddress_ToBeRead;
     end process;
 
 
 
 
-    ReturnAddress <= WReg_ReturnAddress;
+    ReturnAddress_Written <= WReg_ReturnAddress_Written;
 
     -- .......... ModuleInstanceUidReg, Width: 32, Type: Synchronous  .......... 
 
@@ -788,31 +792,31 @@ begin
     begin 
         if (Rst = '1') then 
             PreMuxAck_ModuleInstanceUidReg <= '0';
-            WReg_ModuleInstanceUid <= "00000000000000000000000000000000";
+            WReg_ModuleInstanceUid_Written <= "00000000000000000000000000000000";
         elsif rising_edge(Clk) then
             PreMuxAck_ModuleInstanceUidReg <= WriteDiff_ModuleInstanceUidReg or ReadDiff_ModuleInstanceUidReg; 
             if (WriteDiff_ModuleInstanceUidReg = '1') then
-                if (Sel(3) = '1') then WReg_ModuleInstanceUid(31 downto 24) <= DatIn(31 downto 24); end if;
-                if (Sel(2) = '1') then WReg_ModuleInstanceUid(23 downto 16) <= DatIn(23 downto 16); end if;
-                if (Sel(1) = '1') then WReg_ModuleInstanceUid(15 downto 8) <= DatIn(15 downto 8); end if;
-                if (Sel(0) = '1') then WReg_ModuleInstanceUid(7 downto 0) <= DatIn(7 downto 0); end if;
+                if (Sel(3) = '1') then WReg_ModuleInstanceUid_Written(31 downto 24) <= DatIn(31 downto 24); end if;
+                if (Sel(2) = '1') then WReg_ModuleInstanceUid_Written(23 downto 16) <= DatIn(23 downto 16); end if;
+                if (Sel(1) = '1') then WReg_ModuleInstanceUid_Written(15 downto 8) <= DatIn(15 downto 8); end if;
+                if (Sel(0) = '1') then WReg_ModuleInstanceUid_Written(7 downto 0) <= DatIn(7 downto 0); end if;
             else
             end if;
         end if;
     end process;
 
     mux_premuxdatout_ModuleInstanceUidReg0 : process (
-            WReg_ModuleInstanceUid
+            ModuleInstanceUid_ToBeRead
             )
     begin 
          PreMuxDatOut_ModuleInstanceUidReg <= x"0000_0000";
-         PreMuxDatOut_ModuleInstanceUidReg(31 downto 0) <= WReg_ModuleInstanceUid;
+         PreMuxDatOut_ModuleInstanceUidReg(31 downto 0) <= ModuleInstanceUid_ToBeRead;
     end process;
 
 
 
 
-    ModuleInstanceUid <= WReg_ModuleInstanceUid;
+    ModuleInstanceUid_Written <= WReg_ModuleInstanceUid_Written;
 
     -- .......... ActivationFrameAddressReg, Width: 32, Type: Synchronous  .......... 
 
@@ -923,10 +927,14 @@ architecture arch_for_synthesys of WasmFpgaStackWshBn is
             StackAddress_ToBeRead : in std_logic_vector(31 downto 0);
             StackAddress_Written : out std_logic_vector(31 downto 0);
             WRegPulse_StackAddressReg : out std_logic;
-            MaxLocals : out std_logic_vector(31 downto 0);
-            MaxResults : out std_logic_vector(31 downto 0);
-            ReturnAddress : out std_logic_vector(31 downto 0);
-            ModuleInstanceUid : out std_logic_vector(31 downto 0);
+            MaxLocals_ToBeRead : in std_logic_vector(31 downto 0);
+            MaxLocals_Written : out std_logic_vector(31 downto 0);
+            MaxResults_ToBeRead : in std_logic_vector(31 downto 0);
+            MaxResults_Written : out std_logic_vector(31 downto 0);
+            ReturnAddress_ToBeRead : in std_logic_vector(31 downto 0);
+            ReturnAddress_Written : out std_logic_vector(31 downto 0);
+            ModuleInstanceUid_ToBeRead : in std_logic_vector(31 downto 0);
+            ModuleInstanceUid_Written : out std_logic_vector(31 downto 0);
             ActivationFrameAddress_ToBeRead : in std_logic_vector(31 downto 0);
             ActivationFrameAddress_Written : out std_logic_vector(31 downto 0);
             WRegPulse_ActivationFrameAddressReg : out std_logic
@@ -975,10 +983,14 @@ begin
         StackAddress_ToBeRead => StackBlk_WasmFpgaStackWshBn.StackAddress_ToBeRead,
         StackAddress_Written => WasmFpgaStackWshBn_StackBlk.StackAddress_Written,
         WRegPulse_StackAddressReg => WasmFpgaStackWshBn_StackBlk.WRegPulse_StackAddressReg,
-        MaxLocals => WasmFpgaStackWshBn_StackBlk.MaxLocals,
-        MaxResults => WasmFpgaStackWshBn_StackBlk.MaxResults,
-        ReturnAddress => WasmFpgaStackWshBn_StackBlk.ReturnAddress,
-        ModuleInstanceUid => WasmFpgaStackWshBn_StackBlk.ModuleInstanceUid,
+        MaxLocals_ToBeRead => StackBlk_WasmFpgaStackWshBn.MaxLocals_ToBeRead,
+        MaxLocals_Written => WasmFpgaStackWshBn_StackBlk.MaxLocals_Written,
+        MaxResults_ToBeRead => StackBlk_WasmFpgaStackWshBn.MaxResults_ToBeRead,
+        MaxResults_Written => WasmFpgaStackWshBn_StackBlk.MaxResults_Written,
+        ReturnAddress_ToBeRead => StackBlk_WasmFpgaStackWshBn.ReturnAddress_ToBeRead,
+        ReturnAddress_Written => WasmFpgaStackWshBn_StackBlk.ReturnAddress_Written,
+        ModuleInstanceUid_ToBeRead => StackBlk_WasmFpgaStackWshBn.ModuleInstanceUid_ToBeRead,
+        ModuleInstanceUid_Written => WasmFpgaStackWshBn_StackBlk.ModuleInstanceUid_Written,
         ActivationFrameAddress_ToBeRead => StackBlk_WasmFpgaStackWshBn.ActivationFrameAddress_ToBeRead,
         ActivationFrameAddress_Written => WasmFpgaStackWshBn_StackBlk.ActivationFrameAddress_Written,
         WRegPulse_ActivationFrameAddressReg => WasmFpgaStackWshBn_StackBlk.WRegPulse_ActivationFrameAddressReg

@@ -52,6 +52,17 @@ package WasmFpgaStackPackage is
                                     signal MaxResults : in std_logic_vector;
                                     signal ReturnAddress : in std_logic_vector);
 
+    procedure RemoveActivationFrame(signal State : inout std_logic_vector;
+                                    signal PopFromStackState : inout std_logic_vector;
+                                    signal ToStackMemory : inout T_ToWishbone;
+                                    signal FromStackMemory : in T_FromWishbone;
+                                    signal StackAddress : inout std_logic_vector;
+                                    signal ModuleInstanceUid : inout std_logic_vector;
+                                    signal MaxLocals : inout std_logic_vector;
+                                    signal MaxResults : inout std_logic_vector;
+                                    signal ReturnAddress : inout std_logic_vector;
+                                    signal StackType : out std_logic_vector);
+
     procedure LocalSet(signal State: inout std_logic_vector;
                        signal PopFromStackState : inout std_logic_vector;
                        signal ToStackMemory : out T_ToWishbone;
@@ -97,10 +108,7 @@ end;
 package body WasmFpgaStackPackage is
 
     --
-    -- Activation Frame Creation
-    --
-    -- Pop number of arguments from stack and push them back on stack as local
-    -- using a specific memory size for indexed access.
+    -- Create Activation Frame
     --
     -- local 0 (64 Bit value, 32 Bit type)
     -- local 1 (64 Bit value, 32 Bit type)
@@ -142,6 +150,57 @@ package body WasmFpgaStackPackage is
                           MaxResults,
                           WASMFPGASTACK_VAL_Activation);
             if (PushToStackState = StateEnd) then
+                State <= StateEnd;
+            end if;
+        elsif (State = StateEnd) then
+            State <= StateIdle;
+        else
+            State <= StateError;
+        end if;
+    end;
+
+    --
+    -- Remove Activation Frame
+    --
+    procedure RemoveActivationFrame(signal State : inout std_logic_vector;
+                                    signal PopFromStackState : inout std_logic_vector;
+                                    signal ToStackMemory : inout T_ToWishbone;
+                                    signal FromStackMemory : in T_FromWishbone;
+                                    signal StackAddress : inout std_logic_vector;
+                                    signal ModuleInstanceUid : inout std_logic_vector;
+                                    signal MaxLocals : inout std_logic_vector;
+                                    signal MaxResults : inout std_logic_vector;
+                                    signal ReturnAddress : inout std_logic_vector;
+                                    signal StackType : out std_logic_vector) is
+    begin
+        if (State = StateIdle) then
+            ModuleInstanceUid <= (others => '0');
+            MaxLocals <= (others => '0');
+            MaxResults <= (others => '0');
+            ReturnAddress <= (others => '0');
+            State <= State0;
+        elsif (State = State0) then
+            -- Pop max. locals and max results from stack
+            PopFromStack64(PopFromStackState,
+                           ToStackMemory,
+                           FromStackMemory,
+                           StackAddress,
+                           MaxLocals,
+                           MaxResults,
+                           StackType);
+            if (PopFromStackState = StateEnd) then
+                State <= State1;
+            end if;
+        elsif(State = State1) then
+            -- Pop module instance UID and return address from stack
+            PopFromStack64(PopFromStackState,
+                           ToStackMemory,
+                           FromStackMemory,
+                           StackAddress,
+                           ModuleInstanceUid,
+                           ReturnAddress,
+                           StackType);
+            if (PopFromStackState = StateEnd) then
                 State <= StateEnd;
             end if;
         elsif (State = StateEnd) then

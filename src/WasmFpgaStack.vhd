@@ -45,10 +45,19 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   signal Type_ToBeRead : std_logic_vector(2 downto 0);
   signal Type_Written : std_logic_vector(2 downto 0);
   signal LocalIndex : std_logic_vector(31 downto 0);
-  signal ModuleInstanceUid : std_logic_vector(31 downto 0);
+
   signal HighValue : std_logic_vector(31 downto 0);
   signal LowValue : std_logic_vector(31 downto 0);
   signal TypeValue : std_logic_vector(2 downto 0);
+
+  signal MaxLocals_ToBeRead : std_logic_vector(31 downto 0);
+  signal MaxLocals_Written : std_logic_vector(31 downto 0);
+  signal MaxResults_ToBeRead : std_logic_vector(31 downto 0);
+  signal MaxResults_Written : std_logic_vector(31 downto 0);
+  signal ReturnAddress_ToBeRead : std_logic_vector(31 downto 0);
+  signal ReturnAddress_Written : std_logic_vector(31 downto 0);
+  signal ModuleInstanceUid_ToBeRead : std_logic_vector(31 downto 0);
+  signal ModuleInstanceUid_Written : std_logic_vector(31 downto 0);
 
   signal MaskedAdr : std_logic_vector(23 downto 0);
 
@@ -63,9 +72,6 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
   signal StackAddress_Written : std_logic_vector(31 downto 0);
   signal WRegPulse_StackAddressReg : std_logic;
   signal ActivationFrameAddress : std_logic_vector(23 downto 0);
-  signal MaxLocals : std_logic_vector(31 downto 0);
-  signal MaxResults : std_logic_vector(31 downto 0);
-  signal ReturnAddress : std_logic_vector(31 downto 0);
 
   constant WASMFPGASTORE_ADR_BLK_MASK_StackBlk : std_logic_vector(23 downto 0) := x"00003F";
 
@@ -117,13 +123,18 @@ begin
     constant StackStatePop64Bit0 : std_logic_vector(7 downto 0) := x"04";
     constant StackStateLocalGet0 : std_logic_vector(7 downto 0) := x"05";
     constant StackStateLocalSet0 : std_logic_vector(7 downto 0) := x"06";
-    constant StackStateActivationFrame0 : std_logic_vector(7 downto 0) := x"07";
+    constant StackStateCreateActivationFrame0 : std_logic_vector(7 downto 0) := x"07";
+    constant StackStateRemoveActivationFrame0 : std_logic_vector(7 downto 0) := x"08";
     constant StackStateError : std_logic_vector(7 downto 0) := x"FF";
   begin
     if (Rst = '1') then
       Busy <= '1';
       Trap <= '0';
       Zero <= (others => '0');
+      MaxLocals_ToBeRead <= (others => '0');
+      MaxResults_ToBeRead <= (others => '0');
+      ReturnAddress_ToBeRead <= (others => '0');
+      ModuleInstanceUid_ToBeRead <= (others => '0');
       ToStackMemory <= (
           Adr => (others => '0'),
           Sel => (others => '1'),
@@ -191,22 +202,22 @@ begin
             elsif(Action = WASMFPGASTACK_VAL_LocalSet) then
                 StackState <= StackStateLocalSet0;
             elsif(Action = WASMFPGASTACK_VAL_CreateActivationFrame) then
-                StackState <= StackStateActivationFrame0;
+                StackState <= StackStateCreateActivationFrame0;
             end if;
         end if;
       --
       -- Create Activation Frame
       --
-      elsif(StackState = StackStateActivationFrame0) then
+      elsif(StackState = StackStateCreateActivationFrame0) then
         CreateActivationFrame(ActivationFrameState,
                               PushToStackState,
                               ToStackMemory,
                               FromStackMemory,
                               StackAddress,
-                              ModuleInstanceUid,
-                              MaxLocals,
-                              MaxResults,
-                              ReturnAddress);
+                              ModuleInstanceUid_Written,
+                              MaxLocals_Written,
+                              MaxResults_Written,
+                              ReturnAddress_Written);
         if (ActivationFrameState = StateEnd) then
             StackSize <= StackSize + 1;
             ActivationFrameAddress <= std_logic_vector(
@@ -217,7 +228,24 @@ begin
       --
       -- Remove Activation Frame
       --
-
+      elsif(StackState = StackStateRemoveActivationFrame0) then
+        RemoveActivationFrame(ActivationFrameState,
+                              PopFromStackState,
+                              ToStackMemory,
+                              FromStackMemory,
+                              StackAddress,
+                              ModuleInstanceUid_ToBeRead,
+                              MaxLocals_ToBeRead,
+                              MaxResults_ToBeRead,
+                              ReturnAddress_ToBeRead,
+                              Type_ToBeRead);
+        if (ActivationFrameState = StateEnd) then
+            StackSize <= StackSize - 1;
+            ActivationFrameAddress <= std_logic_vector(
+                unsigned(StackAddress) - ActivationFrameSize
+            );
+            StackState <= StackStateIdle;
+        end if;
       --
       -- Local Set
       --
@@ -357,10 +385,14 @@ begin
       StackAddress_ToBeRead => StackAddress_ToBeRead,
       StackAddress_Written => StackAddress_Written,
       WRegPulse_StackAddressReg => WRegPulse_StackAddressReg,
-      MaxLocals => MaxLocals,
-      MaxResults => MaxResults,
-      ReturnAddress => ReturnAddress,
-      ModuleInstanceUid => ModuleInstanceUid,
+      MaxLocals_ToBeRead => MaxLocals_ToBeRead,
+      MaxLocals_Written => MaxLocals_Written,
+      MaxResults_ToBeRead => MaxResults_ToBeRead,
+      MaxResults_Written => MaxResults_Written,
+      ReturnAddress_ToBeRead => ReturnAddress_ToBeRead,
+      ReturnAddress_Written => ReturnAddress_Written,
+      ModuleInstanceUid_ToBeRead => ModuleInstanceUid_ToBeRead,
+      ModuleInstanceUid_Written => ModuleInstanceUid_Written,
       ActivationFrameAddress_ToBeRead => ActivationFrameAddress_ToBeRead,
       ActivationFrameAddress_Written => ActivationFrameAddress_Written,
       WRegPulse_ActivationFrameAddressReg => WRegPulse_ActivationFrameAddressReg

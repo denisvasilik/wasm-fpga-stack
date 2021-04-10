@@ -110,10 +110,10 @@ package WasmFpgaStackWshBn_Package is
         LocalIndex :   std_logic_vector(31 downto 0);
         StackAddress_Written :   std_logic_vector(31 downto 0);
         WRegPulse_StackAddressReg :   std_logic;
-        MaxLocals :   std_logic_vector(31 downto 0);
-        MaxResults :   std_logic_vector(31 downto 0);
-        ReturnAddress :   std_logic_vector(31 downto 0);
-        ModuleInstanceUid :   std_logic_vector(31 downto 0);
+        MaxLocals_Written :   std_logic_vector(31 downto 0);
+        MaxResults_Written :   std_logic_vector(31 downto 0);
+        ReturnAddress_Written :   std_logic_vector(31 downto 0);
+        ModuleInstanceUid_Written :   std_logic_vector(31 downto 0);
         ActivationFrameAddress_Written :   std_logic_vector(31 downto 0);
         WRegPulse_ActivationFrameAddressReg :   std_logic;
     end record;
@@ -130,6 +130,10 @@ package WasmFpgaStackWshBn_Package is
         LowValue_ToBeRead :   std_logic_vector(31 downto 0);
         Type_ToBeRead :   std_logic_vector(2 downto 0);
         StackAddress_ToBeRead :   std_logic_vector(31 downto 0);
+        MaxLocals_ToBeRead :   std_logic_vector(31 downto 0);
+        MaxResults_ToBeRead :   std_logic_vector(31 downto 0);
+        ReturnAddress_ToBeRead :   std_logic_vector(31 downto 0);
+        ModuleInstanceUid_ToBeRead :   std_logic_vector(31 downto 0);
         ActivationFrameAddress_ToBeRead :   std_logic_vector(31 downto 0);
     end record;
 

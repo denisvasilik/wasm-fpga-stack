@@ -305,7 +305,7 @@ HwSwIf WasmFpgaStack {
                 HwAckImmediate = 'Yes';
             }
             Bits {
-                BitFieldData MaxLocals ( 31 downto 0 ) 'RW_WReg_RLoopBack' {
+                BitFieldData MaxLocals ( 31 downto 0 ) 'RorW_WReg_RTrans' {
                     BitFieldDescription { ""; }
                     ResetValueEntry = 0b0;
                     BlockResetsAffecting {
@@ -330,7 +330,7 @@ HwSwIf WasmFpgaStack {
                 HwAckImmediate = 'Yes';
             }
             Bits {
-                BitFieldData MaxResults ( 31 downto 0 ) 'RW_WReg_RLoopBack' {
+                BitFieldData MaxResults ( 31 downto 0 ) 'RorW_WReg_RTrans' {
                     BitFieldDescription { ""; }
                     ResetValueEntry = 0b0;
                     BlockResetsAffecting {
@@ -351,7 +351,7 @@ HwSwIf WasmFpgaStack {
                 HwAckImmediate = 'Yes';
             }
             Bits {
-                BitFieldData ReturnAddress ( 31 downto 0 ) 'RW_WReg_RLoopBack' {
+                BitFieldData ReturnAddress ( 31 downto 0 ) 'RorW_WReg_RTrans' {
                     BitFieldDescription { ""; }
                     ResetValueEntry = 0b0;
                     BlockResetsAffecting {
@@ -372,7 +372,7 @@ HwSwIf WasmFpgaStack {
                 HwAckImmediate = 'Yes';
             }
             Bits {
-                BitFieldData ModuleInstanceUid ( 31 downto 0 ) 'RW_WReg_RLoopBack' {
+                BitFieldData ModuleInstanceUid ( 31 downto 0 ) 'RorW_WReg_RTrans' {
                     BitFieldDescription { ""; }
                     ResetValueEntry = 0b0;
                     BlockResetsAffecting {
