@@ -67,11 +67,11 @@ architecture WasmFpgaStackArchitecture of WasmFpgaStack is
 
   signal StackState : std_logic_vector(7 downto 0);
 
-  signal StackAddress : std_logic_vector(23 downto 0);
+  signal StackAddress : std_logic_vector(31 downto 0);
   signal StackAddress_ToBeRead : std_logic_vector(31 downto 0);
   signal StackAddress_Written : std_logic_vector(31 downto 0);
   signal WRegPulse_StackAddressReg : std_logic;
-  signal ActivationFrameAddress : std_logic_vector(23 downto 0);
+  signal ActivationFrameAddress : std_logic_vector(31 downto 0);
 
   constant WASMFPGASTORE_ADR_BLK_MASK_StackBlk : std_logic_vector(23 downto 0) := x"00003F";
 
@@ -101,9 +101,9 @@ begin
 
   MaskedAdr <= Adr and WASMFPGASTORE_ADR_BLK_MASK_StackBlk;
 
-  StackAddress_ToBeRead <= x"00" & StackAddress;
+  StackAddress_ToBeRead <= StackAddress;
 
-  ActivationFrameAddress_ToBeRead <= x"00" & ActivationFrameAddress;
+  ActivationFrameAddress_ToBeRead <= ActivationFrameAddress;
 
   Stack_Adr <= ToStackMemory.Adr;
   Stack_Sel <= ToStackMemory.Sel;
@@ -166,10 +166,10 @@ begin
         ToStackMemory.Stb <= '0';
         ToStackMemory.We <= '0';
         if (WRegPulse_StackAddressReg = '1') then
-            StackAddress <= StackAddress_Written(23 downto 0);
+            StackAddress <= StackAddress_Written;
         end if;
         if (WRegPulse_ActivationFrameAddressReg = '1') then
-            ActivationFrameAddress <= ActivationFrameAddress_Written(23 downto 0);
+            ActivationFrameAddress <= ActivationFrameAddress_Written;
         end if;
         if (WRegPulse_ControlReg = '1' and Run = '1') then
             Busy <= '1';
@@ -203,6 +203,10 @@ begin
                 StackState <= StackStateLocalSet0;
             elsif(Action = WASMFPGASTACK_VAL_CreateActivationFrame) then
                 StackState <= StackStateCreateActivationFrame0;
+            elsif(Action = WASMFPGASTACK_VAL_RemoveActivationFrame) then
+                StackAddress <= std_logic_vector(
+                    unsigned(ActivationFrameAddress) + ActivationFrameSize);
+                StackState <= StackStateRemoveActivationFrame0;
             end if;
         end if;
       --
@@ -231,6 +235,7 @@ begin
       elsif(StackState = StackStateRemoveActivationFrame0) then
         RemoveActivationFrame(ActivationFrameState,
                               PopFromStackState,
+                              PushToStackState,
                               ToStackMemory,
                               FromStackMemory,
                               StackAddress,
@@ -238,12 +243,15 @@ begin
                               MaxLocals_ToBeRead,
                               MaxResults_ToBeRead,
                               ReturnAddress_ToBeRead,
-                              Type_ToBeRead);
+                              HighValue,
+                              LowValue,
+                              TypeValue,
+                              ActivationFrameAddress);
         if (ActivationFrameState = StateEnd) then
             StackSize <= StackSize - 1;
-            ActivationFrameAddress <= std_logic_vector(
-                unsigned(StackAddress) - ActivationFrameSize
-            );
+            LowValue_ToBeRead <= LowValue;
+            HighValue_ToBeRead <= HighValue;
+            Type_ToBeRead <= TypeValue;
             StackState <= StackStateIdle;
         end if;
       --

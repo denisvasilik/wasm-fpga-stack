@@ -21,7 +21,8 @@ BEGIN_SUB
     CALL $TEST_LOCAL_SET_BIT
     CALL $TEST_CREATE_ACTIVATION_FRAME_SINGLE
     CALL $TEST_CREATE_ACTIVATION_FRAME_MULTIPLE
-    -- CALL $TEST_REMOVE_ACTIVATION_FRAME
+    CALL $TEST_REMOVE_ACTIVATION_FRAME_WITHOUT_RESULT
+    CALL $TEST_REMOVE_ACTIVATION_FRAME_WITH_RESULT
 
     RETURN_CALL
 END_SUB
@@ -329,7 +330,7 @@ BEGIN_SUB
     -- Current Activation Frame
     WRITE_RAM 32 #x0F #xFFFFFFFF -- Module instance UID
     WRITE_RAM 32 #x10 #xFFFFFFFF -- Return address
-    WRITE_RAM 32 #x11 #x00000005 -- Type: Activation Frame
+    WRITE_RAM 32 #x11 #x00000005 -- Previous Activation Frame Address
     WRITE_RAM 32 #x12 #x00000003 -- Max locals
     WRITE_RAM 32 #x13 #x00000000 -- Max results
     WRITE_RAM 32 #x14 #x00000005 -- Type: Activation Frame
@@ -463,6 +464,149 @@ BEGIN_SUB
 
     -- Verify activaten frame address
     VERIFY_FPGA 32 $STACKBLK_ADR_ActivationFrameAddressReg WB_VALUE #x6 #xFFFFFFFF
+
+    RETURN_CALL
+END_SUB
+
+
+TEST_REMOVE_ACTIVATION_FRAME_WITHOUT_RESULT:
+BEGIN_SUB
+    MESSAGE 0 "TEST_REMOVE_ACTIVATION_FRAME_WITHOUT_RESULT"
+
+    -- Previous Activation Frame
+    WRITE_RAM 32 #x00 #xFFFFFFFF -- Module instance UID
+    WRITE_RAM 32 #x01 #xFFFFFFFF -- Return address
+    WRITE_RAM 32 #x02 #x00000005 -- Previous Activation Frame Address
+    WRITE_RAM 32 #x03 #x00000000 -- Max locals
+    WRITE_RAM 32 #x04 #x00000000 -- Max results
+    WRITE_RAM 32 #x05 #x00000005 -- Type: Activation Frame
+
+    -- Local 0
+    WRITE_RAM 32 #x06 #x11223344 -- LowValue
+    WRITE_RAM 32 #x07 #x00000000 -- HighValue
+    WRITE_RAM 32 #x08 $STACKBLK_VAL_i32 -- TypeValue
+    -- Local 1
+    WRITE_RAM 32 #x09 #x44556677 -- LowValue
+    WRITE_RAM 32 #x0A #x00000000 -- HighValue
+    WRITE_RAM 32 #x0B $STACKBLK_VAL_i32 -- TypeValue
+    -- Local 2
+    WRITE_RAM 32 #x0C #xAABBCCDD -- LowValue
+    WRITE_RAM 32 #x0D #x00000000 -- HighValue
+    WRITE_RAM 32 #x0E $STACKBLK_VAL_i32 -- TypeValue
+
+    -- Current Activation Frame
+    WRITE_RAM 32 #x0F #xFFFFFFFF -- Module instance UID
+    WRITE_RAM 32 #x10 #xFFFFFFFF -- Return address
+    WRITE_RAM 32 #x11 #x00000000 -- Previous Activation Frame Address
+    WRITE_RAM 32 #x12 #x00000003 -- Max locals
+    WRITE_RAM 32 #x13 #x00000000 -- Max results
+    WRITE_RAM 32 #x14 #x00000005 -- Type: Activation Frame
+
+    -- Set activaten frame address
+    WRITE_FPGA 32 $STACKBLK_ADR_ActivationFrameAddressReg #x0F
+
+    -- Set stack address after current activation frame + 1 stack value
+    WRITE_FPGA 32 $STACKBLK_ADR_StackAddressReg #x15
+
+    EQU_VAR WB_VALUE $STACKBLK_VAL_DoRun
+    OR_VAR WB_VALUE $STACKBLK_VAL_RemoveActivationFrame
+    EQU_VAR WB_EXPECTED_VALUE $WB_VALUE
+    WRITE_FPGA 32 $STACKBLK_ADR_ControlReg $WB_VALUE
+    VERIFY_FPGA 32 $STACKBLK_ADR_ControlReg WB_VALUE $WB_EXPECTED_VALUE #xFFFFFFFF
+
+    -- Wait until operation has been finished
+    WAIT_NS 1000
+
+    -- Previous activaten frame address
+    VERIFY_FPGA 32 $STACKBLK_ADR_ActivationFrameAddressReg WB_VALUE #x0 #xFFFFFFFF
+
+    -- Stack address after current activation frame has been removed
+    VERIFY_FPGA 32 $STACKBLK_ADR_StackAddressReg WB_VALUE #x6 #xFFFFFFFF
+
+    -- Frame information provided to registers
+    VERIFY_FPGA 32 $STACKBLK_ADR_MaxLocalsReg WB_VALUE #x00000003 #xFFFFFFFF
+    VERIFY_FPGA 32 $STACKBLK_ADR_MaxResultsReg WB_VALUE #x00000000 #xFFFFFFFF
+    VERIFY_FPGA 32 $STACKBLK_ADR_ReturnAddressReg WB_VALUE #xFFFFFFFF #xFFFFFFFF
+    VERIFY_FPGA 32 $STACKBLK_ADR_ModuleInstanceUidReg WB_VALUE #xFFFFFFFF #xFFFFFFFF
+
+    -- Result provided to registers
+    VERIFY_FPGA 32 $STACKBLK_ADR_LowValueReg WB_VALUE #x00000000 #xFFFFFFFF
+    VERIFY_FPGA 32 $STACKBLK_ADR_HighValueReg WB_VALUE #x00000000 #xFFFFFFFF
+    VERIFY_FPGA 32 $STACKBLK_ADR_TypeReg WB_VALUE $STACKBLK_VAL_Activation #xFFFFFFFF
+
+    RETURN_CALL
+END_SUB
+
+
+TEST_REMOVE_ACTIVATION_FRAME_WITH_RESULT:
+BEGIN_SUB
+    MESSAGE 0 "TEST_REMOVE_ACTIVATION_FRAME_WITH_RESULT"
+
+    -- Previous Activation Frame
+    WRITE_RAM 32 #x00 #xFFFFFFFF -- Module instance UID
+    WRITE_RAM 32 #x01 #xFFFFFFFF -- Return address
+    WRITE_RAM 32 #x02 #x00000005 -- Previous Activation Frame Address
+    WRITE_RAM 32 #x03 #x00000000 -- Max locals
+    WRITE_RAM 32 #x04 #x00000000 -- Max results
+    WRITE_RAM 32 #x05 #x00000005 -- Type: Activation Frame
+
+    -- Local 0
+    WRITE_RAM 32 #x06 #x11223344 -- LowValue
+    WRITE_RAM 32 #x07 #x00000000 -- HighValue
+    WRITE_RAM 32 #x08 $STACKBLK_VAL_i32 -- TypeValue
+    -- Local 1
+    WRITE_RAM 32 #x09 #x44556677 -- LowValue
+    WRITE_RAM 32 #x0A #x00000000 -- HighValue
+    WRITE_RAM 32 #x0B $STACKBLK_VAL_i32 -- TypeValue
+    -- Local 2
+    WRITE_RAM 32 #x0C #xAABBCCDD -- LowValue
+    WRITE_RAM 32 #x0D #x00000000 -- HighValue
+    WRITE_RAM 32 #x0E $STACKBLK_VAL_i32 -- TypeValue
+
+    -- Current Activation Frame
+    WRITE_RAM 32 #x0F #xFFFFFFFF -- Module instance UID
+    WRITE_RAM 32 #x10 #xFFFFFFFF -- Return address
+    WRITE_RAM 32 #x11 #x00000000 -- Previous Activation Frame Address
+    WRITE_RAM 32 #x12 #x00000003 -- Max locals
+    WRITE_RAM 32 #x13 #x00000001 -- Max results
+    WRITE_RAM 32 #x14 #x00000005 -- Type: Activation Frame
+
+    -- First Value on Stack
+    WRITE_RAM 32 #x15 #xAABBCCDD -- LowValue
+    WRITE_RAM 32 #x16 #x00000000 -- HighValue
+    WRITE_RAM 32 #x17 $STACKBLK_VAL_i32 -- TypeValue
+
+    -- Set activaten frame address
+    WRITE_FPGA 32 $STACKBLK_ADR_ActivationFrameAddressReg #x0F
+
+    -- Set stack address after current activation frame + 1 stack value
+    WRITE_FPGA 32 $STACKBLK_ADR_StackAddressReg #x18
+
+    EQU_VAR WB_VALUE $STACKBLK_VAL_DoRun
+    OR_VAR WB_VALUE $STACKBLK_VAL_RemoveActivationFrame
+    EQU_VAR WB_EXPECTED_VALUE $WB_VALUE
+    WRITE_FPGA 32 $STACKBLK_ADR_ControlReg $WB_VALUE
+    VERIFY_FPGA 32 $STACKBLK_ADR_ControlReg WB_VALUE $WB_EXPECTED_VALUE #xFFFFFFFF
+
+    -- Wait until operation has been finished
+    WAIT_NS 1000
+
+    -- Previous activaten frame address
+    VERIFY_FPGA 32 $STACKBLK_ADR_ActivationFrameAddressReg WB_VALUE #x0 #xFFFFFFFF
+
+    -- Stack address after current activation frame has been removed
+    VERIFY_FPGA 32 $STACKBLK_ADR_StackAddressReg WB_VALUE #x9 #xFFFFFFFF
+
+    -- Frame information provided to registers
+    VERIFY_FPGA 32 $STACKBLK_ADR_MaxLocalsReg WB_VALUE #x00000003 #xFFFFFFFF
+    VERIFY_FPGA 32 $STACKBLK_ADR_MaxResultsReg WB_VALUE #x00000001 #xFFFFFFFF
+    VERIFY_FPGA 32 $STACKBLK_ADR_ReturnAddressReg WB_VALUE #xFFFFFFFF #xFFFFFFFF
+    VERIFY_FPGA 32 $STACKBLK_ADR_ModuleInstanceUidReg WB_VALUE #xFFFFFFFF #xFFFFFFFF
+
+    -- Result provided to registers
+    VERIFY_FPGA 32 $STACKBLK_ADR_LowValueReg WB_VALUE #xAABBCCDD #xFFFFFFFF
+    VERIFY_FPGA 32 $STACKBLK_ADR_HighValueReg WB_VALUE #x00000000 #xFFFFFFFF
+    VERIFY_FPGA 32 $STACKBLK_ADR_TypeReg WB_VALUE $STACKBLK_VAL_i32 #xFFFFFFFF
 
     RETURN_CALL
 END_SUB

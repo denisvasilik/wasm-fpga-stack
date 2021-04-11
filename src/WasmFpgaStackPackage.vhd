@@ -54,14 +54,18 @@ package WasmFpgaStackPackage is
 
     procedure RemoveActivationFrame(signal State : inout std_logic_vector;
                                     signal PopFromStackState : inout std_logic_vector;
+                                    signal PushToStackState : inout std_logic_vector;
                                     signal ToStackMemory : inout T_ToWishbone;
                                     signal FromStackMemory : in T_FromWishbone;
                                     signal StackAddress : inout std_logic_vector;
-                                    signal ModuleInstanceUid : inout std_logic_vector;
+                                    signal ModuleInstanceUid : out std_logic_vector;
                                     signal MaxLocals : inout std_logic_vector;
                                     signal MaxResults : inout std_logic_vector;
-                                    signal ReturnAddress : inout std_logic_vector;
-                                    signal StackType : out std_logic_vector);
+                                    signal ReturnAddress : out std_logic_vector;
+                                    signal HighValue : inout std_logic_vector;
+                                    signal LowValue : inout std_logic_vector;
+                                    signal TypeValue : inout std_logic_vector;
+                                    signal ActivationFrameAddress : out std_logic_vector);
 
     procedure LocalSet(signal State: inout std_logic_vector;
                        signal PopFromStackState : inout std_logic_vector;
@@ -70,9 +74,9 @@ package WasmFpgaStackPackage is
                        signal ActivationFrameAddress : in std_logic_vector;
                        signal StackAddress : inout std_logic_vector;
                        signal LocalIndex : in std_logic_vector;
-                       signal HighValue : inout std_logic_vector(31 downto 0);
-                       signal LowValue : inout std_logic_vector(31 downto 0);
-                       signal TypeValue : inout std_logic_vector(2 downto 0);
+                       signal HighValue : inout std_logic_vector;
+                       signal LowValue : inout std_logic_vector;
+                       signal TypeValue : inout std_logic_vector;
                        signal ActivationFramePtr : inout std_logic_vector);
 
     procedure LocalGet(signal State: inout std_logic_vector;
@@ -82,9 +86,9 @@ package WasmFpgaStackPackage is
                        signal ActivationFrameAddress : in std_logic_vector;
                        signal StackAddress : inout std_logic_vector;
                        signal LocalIndex : in std_logic_vector;
-                       signal HighValue : inout std_logic_vector(31 downto 0);
-                       signal LowValue : inout std_logic_vector(31 downto 0);
-                       signal TypeValue : inout std_logic_vector(2 downto 0);
+                       signal HighValue : inout std_logic_vector;
+                       signal LowValue : inout std_logic_vector;
+                       signal TypeValue : inout std_logic_vector;
                        signal ActivationFramePtr : inout std_logic_vector);
 
     procedure PushToStack64(signal State : inout std_logic_vector;
@@ -164,14 +168,18 @@ package body WasmFpgaStackPackage is
     --
     procedure RemoveActivationFrame(signal State : inout std_logic_vector;
                                     signal PopFromStackState : inout std_logic_vector;
+                                    signal PushToStackState : inout std_logic_vector;
                                     signal ToStackMemory : inout T_ToWishbone;
                                     signal FromStackMemory : in T_FromWishbone;
                                     signal StackAddress : inout std_logic_vector;
-                                    signal ModuleInstanceUid : inout std_logic_vector;
+                                    signal ModuleInstanceUid : out std_logic_vector;
                                     signal MaxLocals : inout std_logic_vector;
                                     signal MaxResults : inout std_logic_vector;
-                                    signal ReturnAddress : inout std_logic_vector;
-                                    signal StackType : out std_logic_vector) is
+                                    signal ReturnAddress : out std_logic_vector;
+                                    signal HighValue : inout std_logic_vector;
+                                    signal LowValue : inout std_logic_vector;
+                                    signal TypeValue : inout std_logic_vector;
+                                    signal ActivationFrameAddress : out std_logic_vector) is
     begin
         if (State = StateIdle) then
             ModuleInstanceUid <= (others => '0');
@@ -187,11 +195,11 @@ package body WasmFpgaStackPackage is
                            StackAddress,
                            MaxLocals,
                            MaxResults,
-                           StackType);
+                           TypeValue);
             if (PopFromStackState = StateEnd) then
                 State <= State1;
             end if;
-        elsif(State = State1) then
+        elsif (State = State1) then
             -- Pop module instance UID and return address from stack
             PopFromStack64(PopFromStackState,
                            ToStackMemory,
@@ -199,8 +207,54 @@ package body WasmFpgaStackPackage is
                            StackAddress,
                            ModuleInstanceUid,
                            ReturnAddress,
-                           StackType);
+                           ActivationFrameAddress);
             if (PopFromStackState = StateEnd) then
+                if (MaxResults = x"00000000") then
+                    -- No return value
+                    LowValue <= (others => '0');
+                    HighValue <= (others => '0');
+                    TypeValue <= WASMFPGASTACK_VAL_Activation;
+                    -- Move before locals
+                    StackAddress <= std_logic_vector(
+                        unsigned(StackAddress) -
+                        resize(unsigned(MaxLocals) * 3, StackAddress'LENGTH)
+                    );
+                    State <= StateEnd;
+                else
+                    -- Move after current activation frame + 1 stack element
+                    StackAddress <= std_logic_vector(
+                        unsigned(StackAddress) + ActivationFrameSize + 3
+                    );
+                    ToStackMemory.DatIn <= LowValue;
+                    State <= State2;
+                end if;
+            end if;
+        elsif (State = State2) then
+            PopFromStack64(PopFromStackState,
+                           ToStackMemory,
+                           FromStackMemory,
+                           StackAddress,
+                           LowValue,
+                           HighValue,
+                           TypeValue);
+            if (PopFromStackState = StateEnd) then
+                -- Move before locals
+                StackAddress <= std_logic_vector(
+                    unsigned(StackAddress) -
+                    ActivationFrameSize -
+                    resize(unsigned(MaxLocals) * 3, StackAddress'LENGTH)
+                );
+                State <= State3;
+            end if;
+        elsif (State = State3) then
+            PushToStack64(PushToStackState,
+                          ToStackMemory,
+                          FromStackMemory,
+                          StackAddress,
+                          LowValue,
+                          HighValue,
+                          TypeValue);
+            if (PushToStackState = StateEnd) then
                 State <= StateEnd;
             end if;
         elsif (State = StateEnd) then
@@ -217,14 +271,14 @@ package body WasmFpgaStackPackage is
                        signal ActivationFrameAddress : in std_logic_vector;
                        signal StackAddress : inout std_logic_vector;
                        signal LocalIndex : in std_logic_vector;
-                       signal HighValue : inout std_logic_vector(31 downto 0);
-                       signal LowValue : inout std_logic_vector(31 downto 0);
-                       signal TypeValue : inout std_logic_vector(2 downto 0);
+                       signal HighValue : inout std_logic_vector;
+                       signal LowValue : inout std_logic_vector;
+                       signal TypeValue : inout std_logic_vector;
                        signal ActivationFramePtr : inout std_logic_vector) is
     begin
         if (State = StateIdle) then
             ActivationFramePtr <= std_logic_vector(
-                unsigned(ActivationFrameAddress) -
+                resize(unsigned(ActivationFrameAddress), ActivationFramePtr'LENGTH) -
                 resize((unsigned(LocalIndex) + 1) * 3, ActivationFramePtr'LENGTH)
             );
             State <= State0;
@@ -277,7 +331,7 @@ package body WasmFpgaStackPackage is
             ToStackMemory.Stb <= '1';
             ToStackMemory.We <= '1';
             ToStackMemory.Adr <= ActivationFramePtr;
-            ToStackMemory.DatIn <= (31 downto 3 => '0') & TypeValue;
+            ToStackMemory.DatIn <= std_logic_vector(resize(unsigned(TypeValue), ToStackMemory.DatIn'LENGTH));
             State <= State6;
         elsif(State = State6) then
             if (FromStackMemory.Ack = '1') then
@@ -301,14 +355,14 @@ package body WasmFpgaStackPackage is
                        signal ActivationFrameAddress : in std_logic_vector;
                        signal StackAddress : inout std_logic_vector;
                        signal LocalIndex : in std_logic_vector;
-                       signal HighValue : inout std_logic_vector(31 downto 0);
-                       signal LowValue : inout std_logic_vector(31 downto 0);
-                       signal TypeValue : inout std_logic_vector(2 downto 0);
+                       signal HighValue : inout std_logic_vector;
+                       signal LowValue : inout std_logic_vector;
+                       signal TypeValue : inout std_logic_vector;
                        signal ActivationFramePtr : inout std_logic_vector) is
     begin
         if (State = StateIdle) then
             ActivationFramePtr <= std_logic_vector(
-                unsigned(ActivationFrameAddress) -
+                resize(unsigned(ActivationFrameAddress), ActivationFramePtr'LENGTH) -
                 resize((unsigned(LocalIndex) + 1) * 3, ActivationFramePtr'LENGTH)
             );
             State <= State0;
@@ -355,7 +409,7 @@ package body WasmFpgaStackPackage is
                 ToStackMemory.Cyc <= "0";
                 ToStackMemory.Stb <= '0';
                 ToStackMemory.We <= '0';
-                TypeValue <= FromStackMemory.DatOut(2 downto 0);
+                TypeValue <= std_logic_vector(resize(unsigned(FromStackMemory.DatOut), TypeValue'LENGTH));
                 State <= State6;
             end if;
         elsif(State = State6) then
@@ -389,7 +443,7 @@ package body WasmFpgaStackPackage is
         elsif (State = State0) then
             -- Push low value to stack
             ToStackMemory.DatIn <= StackLowValue;
-            ToStackMemory.Adr <= StackAddress;
+            ToStackMemory.Adr <= std_logic_vector(resize(unsigned(StackAddress), ToStackMemory.Adr'LENGTH));
             ToStackMemory.Cyc <= "1";
             ToStackMemory.Stb <= '1';
             ToStackMemory.We <= '1';
@@ -407,7 +461,7 @@ package body WasmFpgaStackPackage is
         elsif(State = State2) then
             -- Push high value to stack
             ToStackMemory.DatIn <= StackHighValue;
-            ToStackMemory.Adr <= StackAddress;
+            ToStackMemory.Adr <= std_logic_vector(resize(unsigned(StackAddress), ToStackMemory.Adr'LENGTH));
             ToStackMemory.Cyc <= "1";
             ToStackMemory.Stb <= '1';
             ToStackMemory.We <= '1';
@@ -424,8 +478,8 @@ package body WasmFpgaStackPackage is
             end if;
         elsif(State = State4) then
             -- Push high value to stack
-            ToStackMemory.DatIn <= (31 downto 3 => '0') & StackType;
-            ToStackMemory.Adr <= StackAddress;
+            ToStackMemory.DatIn <= std_logic_vector(resize(unsigned(StackType), ToStackMemory.DatIn'LENGTH));
+            ToStackMemory.Adr <= std_logic_vector(resize(unsigned(StackAddress), ToStackMemory.Adr'LENGTH));
             ToStackMemory.Cyc <= "1";
             ToStackMemory.Stb <= '1';
             ToStackMemory.We <= '1';
@@ -460,7 +514,7 @@ package body WasmFpgaStackPackage is
             State <= State0;
         elsif (State = State0) then
             -- Pop type from stack
-            ToStackMemory.Adr <= StackAddress;
+            ToStackMemory.Adr <= std_logic_vector(resize(unsigned(StackAddress), ToStackMemory.Adr'LENGTH));
             ToStackMemory.Cyc <= "1";
             ToStackMemory.Stb <= '1';
             ToStackMemory.We <= '0';
@@ -471,13 +525,13 @@ package body WasmFpgaStackPackage is
                 ToStackMemory.Cyc <= "0";
                 ToStackMemory.Stb <= '0';
                 ToStackMemory.We <= '0';
-                StackType <= FromStackMemory.DatOut(2 downto 0);
+                StackType <= std_logic_vector(resize(unsigned(FromStackMemory.DatOut), StackType'LENGTH));
                 StackAddress <= std_logic_vector(unsigned(StackAddress) - 1);
                 State <= State2;
             end if;
         elsif(State = State2) then
             -- Pop high value from stack
-            ToStackMemory.Adr <= StackAddress;
+            ToStackMemory.Adr <= std_logic_vector(resize(unsigned(StackAddress), ToStackMemory.Adr'LENGTH));
             ToStackMemory.Cyc <= "1";
             ToStackMemory.Stb <= '1';
             ToStackMemory.We <= '0';
@@ -493,7 +547,7 @@ package body WasmFpgaStackPackage is
             end if;
         elsif(State = State4) then
             -- Pop low value from stack
-            ToStackMemory.Adr <= StackAddress;
+            ToStackMemory.Adr <= std_logic_vector(resize(unsigned(StackAddress), ToStackMemory.Adr'LENGTH));
             ToStackMemory.Cyc <= "1";
             ToStackMemory.Stb <= '1';
             ToStackMemory.We <= '0';
