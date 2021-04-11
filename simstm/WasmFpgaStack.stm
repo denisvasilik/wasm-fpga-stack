@@ -597,6 +597,11 @@ BEGIN_SUB
     -- Stack address after current activation frame has been removed
     VERIFY_FPGA 32 $STACKBLK_ADR_StackAddressReg WB_VALUE #x9 #xFFFFFFFF
 
+    -- Check return value on stack
+    VERIFY_RAM 32 #x6 WB_VALUE #xAABBCCDD #xFFFFFFFF
+    VERIFY_RAM 32 #x7 WB_VALUE #x00000000 #xFFFFFFFF
+    VERIFY_RAM 32 #x8 WB_VALUE $STACKBLK_VAL_i32 #xFFFFFFFF
+
     -- Frame information provided to registers
     VERIFY_FPGA 32 $STACKBLK_ADR_MaxLocalsReg WB_VALUE #x00000003 #xFFFFFFFF
     VERIFY_FPGA 32 $STACKBLK_ADR_MaxResultsReg WB_VALUE #x00000001 #xFFFFFFFF
