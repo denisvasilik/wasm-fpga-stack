@@ -1,4 +1,3 @@
-use HxS.*;
 use Eccelerators.WasmFpgaStack.Bits.*;
 
 namespace Eccelerators.WasmFpgaStack {
@@ -8,10 +7,10 @@ namespace Eccelerators.WasmFpgaStack {
         Name = "WebAssembly FPGA Bus";
         AddressBusWidth = 24;
         DataBusWidth = 31;
-        Blocks = [EngineDebugBlk];
+        Blocks = [StackBlk];
     }
 
-    block EngineDebugBlk
+    block StackBlk
     {
         Name = "WebAssembly Stack Block";
         Description = "This block describes the WebAssembly stack block.";

@@ -1,5 +1,3 @@
-use HxS.*;
-
 namespace Eccelerators.WasmFpgaStack.Bits
 {
     enum Run
