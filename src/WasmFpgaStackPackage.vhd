@@ -3,9 +3,9 @@ library ieee;
   use ieee.numeric_std.all;
 
 library work;
-  use work.WasmFpgaStackWshBn_Package.all;
+  use work.WasmFpgaStackPackage.all;
 
-package WasmFpgaStackPackage is
+package WasmFpgaStackPackage2 is
 
     constant ActivationFrameSize : natural := 6;
 
@@ -109,7 +109,7 @@ package WasmFpgaStackPackage is
 
 end;
 
-package body WasmFpgaStackPackage is
+package body WasmFpgaStackPackage2 is
 
     --
     -- Create Activation Frame
@@ -140,7 +140,7 @@ package body WasmFpgaStackPackage is
                           StackAddress,
                           ModuleInstanceUid,
                           ReturnAddress,
-                          WASMFPGASTACK_VAL_Activation);
+                          WASMFPGASTACK_VAL_Type_Activation);
             if (PushToStackState = StateEnd) then
                 State <= State1;
             end if;
@@ -152,7 +152,7 @@ package body WasmFpgaStackPackage is
                           StackAddress,
                           MaxLocals,
                           MaxResults,
-                          WASMFPGASTACK_VAL_Activation);
+                          WASMFPGASTACK_VAL_Type_Activation);
             if (PushToStackState = StateEnd) then
                 State <= StateEnd;
             end if;
@@ -213,7 +213,7 @@ package body WasmFpgaStackPackage is
                     -- No return value
                     LowValue <= (others => '0');
                     HighValue <= (others => '0');
-                    TypeValue <= WASMFPGASTACK_VAL_Activation;
+                    TypeValue <= WASMFPGASTACK_VAL_Type_Activation;
                     -- Move before locals
                     StackAddress <= std_logic_vector(
                         unsigned(StackAddress) -

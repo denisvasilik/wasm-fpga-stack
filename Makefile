@@ -35,12 +35,7 @@ clean:
 		ip/**/doc
 
 hxs:
-	docker run -t \
-               -v ${PWD}/hxs:/work/src \
-               -v ${PWD}/hxs_gen:/work/gen \
-               registry.build.aug:5000/docker/hxs_generator:latest
-	cp hxs_gen/vhd_gen/header/wasm_fpga_stack_header.vhd resources/wasm_fpga_stack_header.vhd
-	cp hxs_gen/vhd_gen/wishbone/wasm_fpga_stack_wishbone.vhd resources/wasm_fpga_stack_wishbone.vhd
+	hxsc -o resources vhdl hxs
 
 install-from-test-pypi:
 	pip3 install --upgrade -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple wasm-fpga-stack
