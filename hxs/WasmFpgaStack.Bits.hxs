@@ -1,0 +1,108 @@
+use HxS.*;
+
+namespace Eccelerators.WasmFpgaStack.Bits
+{
+    enum Run
+    {
+        Behaviour = BitBehaviour.ReadWriteRegister;
+        Values = {
+            0b0: value DoNotRun { Description = 'Do nothing.'; },
+            0b1: value DoRun { Description = 'Perform stack action.'; }
+        };
+    }
+
+    enum Action
+    {
+        Behaviour = BitBehaviour.ReadWriteRegister;
+        Values = {
+            0b000: value Push { Description = 'Push a value onto the stack.'; },
+            0b001: value Pop { Description = 'Pop a value from the stack.'; },
+            0b010: value LocalGet { Description = 'Get local of current activation frame.'; },
+            0b011: value LocalSet { Description = 'Set local of current activation frame.'; },
+            0b100: value CreateActivationFrame { Description = 'Create activation frame.'; },
+            0b101: value RemoveActivationFrame { Description = 'Remove activation frame.'; }
+        };
+    }
+
+    enum Busy
+    {
+        Behaviour = BitBehaviour.ReadTransparent;
+        Values = {
+            0b0: value IsNotBusy { Description = 'Stack is idle.'; },
+            0b1: value IsBusy { Description = 'Stack is busy.'; }
+        };
+    }
+
+    data SizeValue
+    {
+        Behaviour = BitBehaviour.ReadTransparent;
+        Width = 32;
+    }
+
+    data HighValue
+    {
+        Behaviour = BitBehaviour.ReadTransparentWriteRegister;
+        Width = 32;
+    }
+    
+    data LowValue
+    {
+        Behaviour = BitBehaviour.ReadTransparentWriteRegister;
+        Width = 32;
+    }
+
+    enum Type
+    {
+        Behaviour = BitBehaviour.ReadTransparentWriteRegister;
+        Values = {
+            0b000: value i32 { Description = '32 Bit Integer'; },
+            0b001: value i64 { Description = '64 Bit Integer'; },
+            0b010: value f32 { Description = '32 Bit Floating Point Data'; },
+            0b011: value f64 { Description = '64 Bit Floarting Point Data'; },
+            0b100: value Label { Description = 'Structured Control Instructions'; },
+            0b101: value Activation { Description = 'Call Frame'; }
+        };
+    }
+
+    data LocalIndex
+    {
+        Behaviour = BitBehaviour.ReadWriteRegister;
+        Width = 32;
+    }
+
+    data StackAddress
+    {
+        Behaviour = BitBehaviour.ReadTransparentWriteRegister;
+        Width = 32;
+    }
+    
+    data MaxLocals
+    {
+        Behaviour = BitBehaviour.ReadTransparentWriteRegister;
+        Width = 32;
+    }
+    
+    data MaxResults
+    {
+        Behaviour = BitBehaviour.ReadTransparentWriteRegister;
+        Width = 32;
+    }
+
+    data ReturnAddress
+    {
+        Behaviour = BitBehaviour.ReadTransparentWriteRegister;
+        Width = 32;
+    }
+    
+    data ModuleInstanceUid
+    {
+        Behaviour = BitBehaviour.ReadTransparentWriteRegister;
+        Width = 32;
+    }
+    
+    data ActivationFrameAddress
+    {
+        Behaviour = BitBehaviour.ReadTransparentWriteRegister;
+        Width = 32;
+    }
+}

@@ -1,0 +1,147 @@
+use HxS.*;
+use Eccelerators.WasmFpgaStack.Bits.*;
+
+namespace Eccelerators.WasmFpgaStack {
+
+    interface WasmFpgaBus 
+    {
+        Name = "WebAssembly FPGA Bus";
+        AddressBusWidth = 24;
+        DataBusWidth = 31;
+        Blocks = [EngineDebugBlk];
+    }
+
+    block EngineDebugBlk
+    {
+        Name = "WebAssembly Stack Block";
+        Description = "This block describes the WebAssembly stack block.";
+        Registers = [
+            ControlReg,
+            StatusReg,
+            SizeReg,
+            HighValueReg,
+            LowValueReg,
+            TypeReg,
+            LocalIndexReg,
+            StackAddressReg,
+            MaxLocalsReg,
+            MaxResultsReg,
+            ReturnAddressReg,
+            ModuleInstanceUidReg,
+            ActivationFrameAddressReg
+        ];
+    }
+
+    register ControlReg : SyncReg32
+    {
+        Name = "Control Register";
+        WriteRegisterPulse = true;
+        Bits = [Action, Run];
+    }
+
+    register StatusReg : SyncReg32
+    {
+        Name = "Status Register";
+        Bits = [Busy];
+    }
+
+    register SizeReg : SyncReg32
+    {
+        Name = "Size Register";
+        Description = "The stack size in number of elements on the current
+                       activation frame.";
+        Bits = [SizeValue];
+    }
+
+    register HighValueReg : SyncReg32
+    {
+        Name = "High Value Register";
+        Description = "High part of the value to push onto stack or high part
+                       of the value that has been popped from the stack. The
+                       high part is only of interest if its a 64 bit type.";
+        Bits = [HighValue];
+    }
+
+    register LowValueReg : SyncReg32
+    {
+        Name = "Low Value Register";
+        Description = "Low part of the value to push onto stack or low part of
+                       the value that has been popped from the stack.";
+        Bits = [LowValue];
+    }
+
+    register TypeReg : SyncReg32
+    {
+        Name = "Type Register";
+        Description = "Type of the value to push onto stack or type of the value
+                       that has been popped from the stack.";
+        Bits = [Type];
+    }
+
+    register LocalIndexReg : SyncReg32
+    {
+        Name = "Local Index Register";
+        Description = "Index used by local.get or local.set instructions.";
+        Bits = [LocalIndex];
+    }
+
+    register StackAddressReg : SyncReg32
+    {
+        Name = "Stack Address Register";
+        Description = "This register can be used to set or get the current stack
+                       address. It is mainly used for testing purposes and may
+                       cause undefined behaviour.";
+        WriteRegisterPulse = true;
+        Bits = [StackAddress];
+    }
+    
+    register MaxLocalsReg : SyncReg32
+    {
+        Name = "Max. Locals Register";
+        Description = "This register specifies the max. number of locals of the
+                       current executing function. When the function changes, 
+                       the number of max. locals will be updated according to 
+                       the value of the new function.";
+        Bits = [MaxLocals];
+    }
+    
+    register MaxResultsReg : SyncReg32
+    {
+        Name = "Max. Results Register";
+        Description = "This register specifies the max. number of results of the
+                       current executing function. When the function changes,
+                       the number of max. locals will be updated according to
+                       the value of the new function. In the current version of
+                       WebAssembly, the length of the result type vector of a
+                       valid function type may be at most 1. This restriction
+                       may be removed in future versions
+                       (https://www.w3.org/TR/wasm-core-1/#function-types).";
+        Bits = [MaxResults];
+    }
+    
+    register ReturnAddressReg : SyncReg32
+    {
+        Name = "Return Address Register";
+        Description = "This register stores the return address of the current
+                       executing function.";
+        Bits = [ReturnAddress];
+    }
+    
+    register ModuleInstanceUidReg : SyncReg32
+    {
+        Name = "Module Instance UID Register";
+        Description = "This register store the module instance UID to use for 
+                       instantiation and invocation.";
+        Bits = [ModuleInstanceUid];
+    }
+    
+    register ActivationFrameAddressReg : SyncReg32
+    {
+        Name = "Activation Frame Register";
+        Description = "This register can be used to set or get the current 
+                       activation frame address. It is mainly used for testing
+                       purposes and may cause undefined behaviour.";
+        WriteRegisterPulse = true;
+        Bits = [ActivationFrameAddress];
+    }
+}
