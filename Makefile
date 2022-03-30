@@ -13,7 +13,7 @@ prepare:
 project: prepare hxs
 	@vivado -mode batch -source scripts/create_project.tcl -notrace -nojournal -tempDir work -log work/vivado.log
 
-package:
+package: hxs
 	python3 setup.py sdist bdist_wheel
 
 clean:

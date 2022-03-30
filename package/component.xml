@@ -268,7 +268,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>287de9b9</spirit:value>
+            <spirit:value>0b667a28</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -289,7 +289,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>287de9b9</spirit:value>
+            <spirit:value>0b667a28</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -653,13 +653,17 @@
         <spirit:fileType>vhdlSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
+        <spirit:name>../src/WasmFpgaStackPackage.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+      </spirit:file>
+      <spirit:file>
         <spirit:name>../resources/wasm_fpga_stack_wishbone.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>../src/WasmFpgaStack.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:userFileType>CHECKSUM_e42d3152</spirit:userFileType>
+        <spirit:userFileType>CHECKSUM_95195402</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
     <spirit:fileSet>
@@ -686,6 +690,10 @@
       <spirit:name>xilinx_anylanguagebehavioralsimulation_view_fileset</spirit:name>
       <spirit:file>
         <spirit:name>../resources/wasm_fpga_stack_header.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>../src/WasmFpgaStackPackage.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
@@ -735,8 +743,8 @@
         <xilinx:taxonomy>AXI_Peripheral</xilinx:taxonomy>
       </xilinx:taxonomies>
       <xilinx:displayName>WebAssembly Stack IP</xilinx:displayName>
-      <xilinx:coreRevision>24</xilinx:coreRevision>
-      <xilinx:coreCreationDateTime>2020-12-23T14:33:47Z</xilinx:coreCreationDateTime>
+      <xilinx:coreRevision>25</xilinx:coreRevision>
+      <xilinx:coreCreationDateTime>2021-09-08T11:42:38Z</xilinx:coreCreationDateTime>
       <xilinx:tags>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@5cbed84e_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@19ee9aa4_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
@@ -795,12 +803,31 @@
         <xilinx:tag xilinx:name="ui.data.coregen.dd@62290764_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@27cc9ac_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@3bb508c8_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@45d9eb4a_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4e9db04f_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3f1e12d6_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1010e581_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@45ef653f_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@41905823_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@31910adf_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@48bed86c_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@e30fdc5_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@8244c08_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@50d87033_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3015a627_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4c6150fe_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@759625d1_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@175b0b8b_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4837391_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5dd4012d_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7016bc05_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@393e2702_ARCHIVE_LOCATION">/home/ubuntu-dev/git/webassembly/wasm-fpga-stack/package</xilinx:tag>
       </xilinx:tags>
     </xilinx:coreExtensions>
     <xilinx:packagingInfo>
       <xilinx:xilinxVersion>2019.2</xilinx:xilinxVersion>
       <xilinx:checksum xilinx:scope="busInterfaces" xilinx:value="d0d6bd03"/>
-      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="0089a40e"/>
+      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="fce480ce"/>
       <xilinx:checksum xilinx:scope="ports" xilinx:value="31c1a026"/>
       <xilinx:checksum xilinx:scope="parameters" xilinx:value="0fa54017"/>
     </xilinx:packagingInfo>
