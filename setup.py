@@ -37,10 +37,9 @@ setuptools.setup(
         (
             "wasm-fpga-stack/resources",
             [
-                "resources/wasm_fpga_stack_header.vhd",
-                "resources/wasm_fpga_stack_direct.vhd",
-                "resources/wasm_fpga_stack_indirect.vhd",
-                "resources/wasm_fpga_stack_wishbone.vhd",
+                "resources/wasmfpgastack.package.vhd",
+                "resources/wasmfpgastack.wishbone.vhd",
+                "resources/wasm_fpga_stack_indirect.stm",
             ],
         ),
         (
