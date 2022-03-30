@@ -618,4 +618,4 @@ END_SUB
 
 
 INCLUDE "Defines.stm"
-INCLUDE "../hxs_gen/simstm_gen/indirect/wasm_fpga_stack_indirect.stm"
+INCLUDE "../resources/wasm_fpga_stack_indirect.stm"
