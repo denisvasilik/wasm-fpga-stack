@@ -4,7 +4,7 @@ library ieee;
 
 library work;
   use work.WasmFpgaStackPackage.all;
-  use work.WasmFpgaStackWshBn_Package.all;
+  use work.WasmFpgaStackPackage2.all;
 
 entity WasmFpgaStack is
     port (
@@ -173,37 +173,37 @@ begin
         end if;
         if (WRegPulse_ControlReg = '1' and Run = '1') then
             Busy <= '1';
-            if (Action = WASMFPGASTACK_VAL_Push) then
-                if (Type_Written = WASMFPGASTACK_VAL_i32 or
-                    Type_Written = WASMFPGASTACK_VAL_f32 or
-                    Type_Written = WASMFPGASTACK_VAL_Label or
-                    Type_Written = WASMFPGASTACK_VAL_Activation) then
+            if (Action = WASMFPGASTACK_VAL_Action_Push) then
+                if (Type_Written = WASMFPGASTACK_VAL_Type_i32 or
+                    Type_Written = WASMFPGASTACK_VAL_Type_f32 or
+                    Type_Written = WASMFPGASTACK_VAL_Type_Label or
+                    Type_Written = WASMFPGASTACK_VAL_Type_Activation) then
                     StackState <= StackStatePush32Bit0;
-                elsif(Type_Written = WASMFPGASTACK_VAL_i64 or
-                      Type_Written = WASMFPGASTACK_VAL_f64) then
+                elsif(Type_Written = WASMFPGASTACK_VAL_Type_i64 or
+                      Type_Written = WASMFPGASTACK_VAL_Type_f64) then
                     StackState <= StackStatePush64Bit0;
                 else
                     StackState <= StackStateError;
                 end if;
-            elsif(Action = WASMFPGASTACK_VAL_Pop) then
-                if (Type_Written = WASMFPGASTACK_VAL_i32 or
-                    Type_Written = WASMFPGASTACK_VAL_f32 or
-                    Type_Written = WASMFPGASTACK_VAL_Label or
-                    Type_Written = WASMFPGASTACK_VAL_Activation) then
+            elsif(Action = WASMFPGASTACK_VAL_Action_Pop) then
+                if (Type_Written = WASMFPGASTACK_VAL_Type_i32 or
+                    Type_Written = WASMFPGASTACK_VAL_Type_f32 or
+                    Type_Written = WASMFPGASTACK_VAL_Type_Label or
+                    Type_Written = WASMFPGASTACK_VAL_Type_Activation) then
                     StackState <= StackStatePop32Bit0;
-                elsif(Type_Written = WASMFPGASTACK_VAL_i64 or
-                      Type_Written = WASMFPGASTACK_VAL_f64) then
+                elsif(Type_Written = WASMFPGASTACK_VAL_Type_i64 or
+                      Type_Written = WASMFPGASTACK_VAL_Type_f64) then
                     StackState <= StackStatePop64Bit0;
                 else
                     StackState <= StackStateError;
                 end if;
-            elsif(Action = WASMFPGASTACK_VAL_LocalGet) then
+            elsif(Action = WASMFPGASTACK_VAL_Action_LocalGet) then
                 StackState <= StackStateLocalGet0;
-            elsif(Action = WASMFPGASTACK_VAL_LocalSet) then
+            elsif(Action = WASMFPGASTACK_VAL_Action_LocalSet) then
                 StackState <= StackStateLocalSet0;
-            elsif(Action = WASMFPGASTACK_VAL_CreateActivationFrame) then
+            elsif(Action = WASMFPGASTACK_VAL_Action_CreateActivationFrame) then
                 StackState <= StackStateCreateActivationFrame0;
-            elsif(Action = WASMFPGASTACK_VAL_RemoveActivationFrame) then
+            elsif(Action = WASMFPGASTACK_VAL_Action_RemoveActivationFrame) then
                 StackAddress <= std_logic_vector(
                     unsigned(ActivationFrameAddress) + ActivationFrameSize);
                 StackState <= StackStateRemoveActivationFrame0;
@@ -375,35 +375,35 @@ begin
       We => We,
       Stb => Stb,
       Cyc => Cyc,
-      StackBlk_DatOut => StackBlk_DatOut,
-      StackBlk_Ack => StackBlk_Ack,
-      StackBlk_Unoccupied_Ack => StackBlk_Unoccupied_Ack,
+      DatOut => StackBlk_DatOut,
+      Ack => StackBlk_Ack,
+      UnoccupiedAck => StackBlk_Unoccupied_Ack,
       Run => Run,
       Action => Action,
-      WRegPulse_ControlReg => WRegPulse_ControlReg,
+      WRegPulseControlReg => WRegPulse_ControlReg,
       Busy => Busy,
       SizeValue => std_logic_vector(StackSize),
-      HighValue_ToBeRead => HighValue_ToBeRead,
-      HighValue_Written => HighValue_Written,
-      LowValue_ToBeRead => LowValue_ToBeRead,
-      LowValue_Written => LowValue_Written,
-      Type_ToBeRead => Type_ToBeRead,
-      Type_Written => Type_Written,
+      HighValueToBeRead => HighValue_ToBeRead,
+      HighValueWritten => HighValue_Written,
+      LowValueToBeRead => LowValue_ToBeRead,
+      LowValueWritten => LowValue_Written,
+      TypeToBeRead => Type_ToBeRead,
+      TypeWritten => Type_Written,
       LocalIndex => LocalIndex,
-      StackAddress_ToBeRead => StackAddress_ToBeRead,
-      StackAddress_Written => StackAddress_Written,
-      WRegPulse_StackAddressReg => WRegPulse_StackAddressReg,
-      MaxLocals_ToBeRead => MaxLocals_ToBeRead,
-      MaxLocals_Written => MaxLocals_Written,
-      MaxResults_ToBeRead => MaxResults_ToBeRead,
-      MaxResults_Written => MaxResults_Written,
-      ReturnAddress_ToBeRead => ReturnAddress_ToBeRead,
-      ReturnAddress_Written => ReturnAddress_Written,
-      ModuleInstanceUid_ToBeRead => ModuleInstanceUid_ToBeRead,
-      ModuleInstanceUid_Written => ModuleInstanceUid_Written,
-      ActivationFrameAddress_ToBeRead => ActivationFrameAddress_ToBeRead,
-      ActivationFrameAddress_Written => ActivationFrameAddress_Written,
-      WRegPulse_ActivationFrameAddressReg => WRegPulse_ActivationFrameAddressReg
+      StackAddressToBeRead => StackAddress_ToBeRead,
+      StackAddressWritten => StackAddress_Written,
+      WRegPulseStackAddressReg => WRegPulse_StackAddressReg,
+      MaxLocalsToBeRead => MaxLocals_ToBeRead,
+      MaxLocalsWritten => MaxLocals_Written,
+      MaxResultsToBeRead => MaxResults_ToBeRead,
+      MaxResultsWritten => MaxResults_Written,
+      ReturnAddressToBeRead => ReturnAddress_ToBeRead,
+      ReturnAddressWritten => ReturnAddress_Written,
+      ModuleInstanceUidToBeRead => ModuleInstanceUid_ToBeRead,
+      ModuleInstanceUidWritten => ModuleInstanceUid_Written,
+      ActivationFrameAddressToBeRead => ActivationFrameAddress_ToBeRead,
+      ActivationFrameAddressWritten => ActivationFrameAddress_Written,
+      WRegPulseActivationFrameAddressReg => WRegPulse_ActivationFrameAddressReg
     );
 
 end;

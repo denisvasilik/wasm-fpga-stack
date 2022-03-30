@@ -48,8 +48,9 @@ if {[string equal [get_filesets -quiet sources_1] ""]} {
 set obj [get_filesets sources_1]
 set files_vhd [list \
  [file normalize "${project_src}/WasmFpgaStack.vhd" ]\
- [file normalize "${project_resources}/wasm_fpga_stack_header.vhd" ]\
- [file normalize "${project_resources}/wasm_fpga_stack_wishbone.vhd" ]\
+ [file normalize "${project_src}/WasmFpgaStackPackage.vhd" ]\
+ [file normalize "${project_resources}/wasmfpgastack.package.vhd" ]\
+ [file normalize "${project_resources}/wasmfpgastack.wishbone.vhd" ]\
  [file normalize "${project_package}/component.xml" ]\
 ]
 add_files -norecurse -fileset $obj $files_vhd

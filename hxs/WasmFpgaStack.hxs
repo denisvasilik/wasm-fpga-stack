@@ -2,11 +2,11 @@ use Eccelerators.WasmFpgaStack.Bits.*;
 
 namespace Eccelerators.WasmFpgaStack {
 
-    interface WasmFpgaBus 
+    interface WasmFpgaStack
     {
         Name = "WebAssembly FPGA Bus";
         AddressBusWidth = 24;
-        DataBusWidth = 31;
+        DataBusWidth = 32;
         Blocks = [StackBlk];
     }
 
