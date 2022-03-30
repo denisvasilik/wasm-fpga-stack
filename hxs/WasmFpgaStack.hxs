@@ -4,7 +4,7 @@ namespace Eccelerators.WasmFpgaStack {
 
     interface WasmFpgaStack
     {
-        Name = "WebAssembly FPGA Bus";
+        Name = "WebAssembly FPGA Stack";
         AddressBusWidth = 24;
         DataBusWidth = 32;
         Blocks = [StackBlk];
@@ -93,17 +93,17 @@ namespace Eccelerators.WasmFpgaStack {
         WriteRegisterPulse = true;
         Bits = [StackAddress];
     }
-    
+
     register MaxLocalsReg : SyncReg32
     {
         Name = "Max. Locals Register";
         Description = "This register specifies the max. number of locals of the
-                       current executing function. When the function changes, 
-                       the number of max. locals will be updated according to 
+                       current executing function. When the function changes,
+                       the number of max. locals will be updated according to
                        the value of the new function.";
         Bits = [MaxLocals];
     }
-    
+
     register MaxResultsReg : SyncReg32
     {
         Name = "Max. Results Register";
@@ -117,7 +117,7 @@ namespace Eccelerators.WasmFpgaStack {
                        (https://www.w3.org/TR/wasm-core-1/#function-types).";
         Bits = [MaxResults];
     }
-    
+
     register ReturnAddressReg : SyncReg32
     {
         Name = "Return Address Register";
@@ -125,19 +125,19 @@ namespace Eccelerators.WasmFpgaStack {
                        executing function.";
         Bits = [ReturnAddress];
     }
-    
+
     register ModuleInstanceUidReg : SyncReg32
     {
         Name = "Module Instance UID Register";
-        Description = "This register store the module instance UID to use for 
+        Description = "This register store the module instance UID to use for
                        instantiation and invocation.";
         Bits = [ModuleInstanceUid];
     }
-    
+
     register ActivationFrameAddressReg : SyncReg32
     {
         Name = "Activation Frame Register";
-        Description = "This register can be used to set or get the current 
+        Description = "This register can be used to set or get the current
                        activation frame address. It is mainly used for testing
                        purposes and may cause undefined behaviour.";
         WriteRegisterPulse = true;
